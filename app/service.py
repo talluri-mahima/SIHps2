@@ -13,6 +13,7 @@ from .rules import canonical, digest, evaluate, RULEPACK_HASH
 
 # One development API process. DB row locking is also used for PostgreSQL.
 WRITE_LOCK = threading.RLock()
+PARSER_SLOTS = threading.BoundedSemaphore(2)
 
 
 def audit(db, app, actor, action, detail):
@@ -49,7 +50,8 @@ def document_scope(db, user, doc_id, write=False):
 def field_dict(f):
     return {'id': f.id, 'document_id': f.document_id, 'key': f.key, 'raw': f.raw, 'value': json.loads(f.value_json),
             'page': f.page, 'bbox': json.loads(f.bbox_json), 'engine': f.engine, 'revision': f.revision,
-            'confirmed_by': f.confirmed_by, 'previous_id': f.previous_id}
+            'confirmed_by': f.confirmed_by, 'previous_id': f.previous_id,
+            'recognition_quality':'LOW_RECOGNITION' if 'LOW_RECOGNITION' in f.engine else 'MANUAL' if f.engine=='MANUAL_REVIEWER_TRANSCRIPTION' else 'UNCONFIRMED_CANDIDATE'}
 
 
 def latest_fields(db, doc_id):
@@ -71,6 +73,11 @@ def invalidate(db, app, actor, detail):
 
 
 def run_job(job_id):
+    with PARSER_SLOTS:
+        _run_job(job_id)
+
+
+def _run_job(job_id):
     with WRITE_LOCK, Session.begin() as db:
         job = db.get(m.Job, job_id)
         if not job or job.status not in {'QUEUED', 'RETRY'} or job.attempt >= 3:
@@ -80,16 +87,30 @@ def run_job(job_id):
         doc = db.get(m.Document, job.document_id)
         doc.status = 'PROCESSING'
         key = doc.object_key
+        document_id = doc.id
     try:
-        completed = subprocess.run([sys.executable, '-m', 'app.extract', str(DATA / 'objects' / key)],
-                                   cwd=str(ROOT), capture_output=True, text=True, timeout=30, check=True)
+        from .malware import scan
+        malware=scan(DATA/'objects'/key)
+        with WRITE_LOCK,Session.begin() as db:
+            db.add(m.VerificationEvent(document_id=document_id,check_type='MALWARE_SCAN',mode=malware['mode'],status=malware['status'],payload_json=canonical(malware),actor='worker'))
+        if malware['status'] not in {'NOT_SCANNED','NO_THREATS_DETECTED'}:
+            raise ValueError('MALWARE_SCAN_NOT_CLEARED')
+        completed = subprocess.run([sys.executable, '-m', 'app.extract', str(DATA / 'objects' / key),str(DATA/'derived'/document_id)],
+                                   cwd=str(ROOT), capture_output=True, text=True, timeout=300, check=True)
         result = json.loads(completed.stdout)
         with WRITE_LOCK, Session.begin() as db:
             job = db.get(m.Job, job_id)
             doc = db.get(m.Document, job.document_id)
+            existing=latest_fields(db,doc.id)
             for f in result['fields']:
+                if f['key'] in existing:
+                    continue
                 db.add(m.Field(document_id=doc.id, key=f['key'], raw=f['raw'], value_json=canonical(f['value']),
                                page=f['page'], bbox_json=canonical(f['bbox']), engine=f['engine']))
+            for p in result.get('page_artifacts',[]):
+                if not db.scalar(select(m.PageArtifact).where(m.PageArtifact.document_id==doc.id,m.PageArtifact.page==p['page'])):
+                    db.add(m.PageArtifact(document_id=doc.id,page=p['page'],image_key=f'{doc.id}/{p["page"]}.png',text_json=canonical(p['lines']),method=p['method']))
+            db.add(m.ProcessingResult(document_id=doc.id,payload_json=canonical({'sha256':doc.sha256,'metrics':result.get('metrics',{}),'classification_candidates':result.get('classification_candidates',[]),'page_classifications':result.get('page_classifications',[]),'layout_observations':result.get('layout_observations',[])})))
             doc.page_count = result['pages']
             doc.status = result['status']
             job.status = 'COMPLETED'
@@ -110,7 +131,8 @@ def run_evaluation(db, app, actor):
     docs = latest_documents(db, app.id)
     snapshots = [{'id': d.id, 'kind': d.kind, 'sha256': d.sha256, 'version': d.version,
                   'status': d.status, 'source_status': d.source_status, 'source_mode': d.source_mode,
-                  'source_note': d.source_note, 'fields': latest_fields(db, d.id)} for d in docs]
+                  'source_note': d.source_note, 'fields': latest_fields(db, d.id),
+                  'verification_events':[{'id':v.id,'check_type':v.check_type,'mode':v.mode,'status':v.status,'at':v.created_at,'payload':json.loads(v.payload_json)} for v in db.scalars(select(m.VerificationEvent).where(m.VerificationEvent.document_id==d.id).order_by(m.VerificationEvent.created_at,m.VerificationEvent.id))]} for d in docs]
     manifest = {'application_id': app.id, 'context_revision': app.revision, 'category': app.category,
                 'academic_year': app.academic_year, 'evaluation_date': app.evaluation_date,
                 'documents': snapshots, 'rulepack_hash': RULEPACK_HASH, 'software': SOFTWARE_VERSION}

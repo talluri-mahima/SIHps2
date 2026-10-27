@@ -28,6 +28,11 @@ import {
   X,
 } from "lucide-react";
 import "./styles.css";
+import {
+  IntegrationsPanel,
+  ProcessingTools,
+  Verification,
+} from "./SubmissionPanels";
 
 type Fact = {
   id: string;
@@ -40,6 +45,7 @@ type Fact = {
   revision: number;
   confirmed_by: string | null;
   engine: string;
+  recognition_quality?: string;
 };
 type Doc = {
   id: string;
@@ -52,6 +58,17 @@ type Doc = {
   fields: Fact[];
   source_status: string;
   source_mode: string;
+  processing?: {
+    layout_observations?: {kind:string;page:number;raw:string;meaning:string;suggested_value?:string[]}[];
+    metrics: {
+      elapsed_seconds: number;
+      ocr_pages: number;
+      candidate_fields: number;
+      low_recognition_lines_omitted: number;
+    };
+    classification_candidates: { kind: string; basis: string }[];
+  } | null;
+  verification_events?: Verification[];
 };
 type Finding = {
   id: string;
@@ -63,6 +80,8 @@ type Finding = {
   module: string;
   reason: string;
   required_action: string;
+  check_basis?:string;
+  source_context?:{document:string;government_copy:string;clauses:string[];applicability:string};
   evidence: {
     document_id: string;
     field_id: string;
@@ -116,6 +135,7 @@ type Page =
   | "Financial evidence"
   | "Findings"
   | "Audit trail";
+type WorkspacePage = Page | "Integrations";
 const nav = [
   { name: "Overview", icon: LayoutDashboard },
   { name: "Evidence", icon: FolderOpen },
@@ -123,6 +143,7 @@ const nav = [
   { name: "Financial evidence", icon: Wallet },
   { name: "Findings", icon: FileCheck2 },
   { name: "Audit trail", icon: Fingerprint },
+  { name: "Integrations", icon: Link2 },
 ] as const;
 const pretty = (value: string) =>
   value
@@ -175,7 +196,7 @@ function App() {
     [list, setList] = useState<Summary[]>([]),
     [active, setActive] = useState("");
   const [data, setData] = useState<Detail | null>(null),
-    [page, setPage] = useState<Page>("Overview"),
+    [page, setPage] = useState<WorkspacePage>("Overview"),
     [docId, setDocId] = useState(""),
     [fieldId, setFieldId] = useState("");
   const [busy, setBusy] = useState(false),
@@ -191,6 +212,7 @@ function App() {
     [editing, setEditing] = useState<Fact | null>(null),
     [editValue, setEditValue] = useState("");
   const [search, setSearch] = useState("");
+  const [authConfig, setAuthConfig] = useState({ demo_login_enabled: true });
   const isOfficer = user?.role === "OFFICER",
     isApplicant = user?.role === "SUBMITTER";
   const doc = data?.documents.find((d) => d.id === docId) || data?.documents[0];
@@ -236,6 +258,9 @@ function App() {
     });
   }
   useEffect(() => {
+    api<{ demo_login_enabled: boolean }>("/auth/config")
+      .then(setAuthConfig)
+      .catch(() => {});
     api<User>("/auth/me")
       .then((u) => {
         setUser(u);
@@ -349,6 +374,24 @@ function App() {
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     }, "Demonstration review report exported.");
   }
+  async function downloadPdfReport() {
+    await perform(async () => {
+      const result = await api<{ id: string }>(
+        "/applications/" + active + "/exports",
+        { method: "POST" },
+      );
+      const response = await fetch("/v1/exports/" + result.id + "/pdf", {
+        credentials: "same-origin",
+      });
+      if (!response.ok) throw new Error("PDF report could not be generated");
+      const url = URL.createObjectURL(await response.blob());
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = "synthetic-review-report.pdf";
+      anchor.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }, "Frozen confirmed-observation PDF exported.");
+  }
   if (!user)
     return (
       <main className="login-page">
@@ -367,42 +410,86 @@ function App() {
             financial evidence reconciliation.
           </p>
           <div className="login-box">
-            <h2>Explore the working foundation</h2>
-            <p>Choose a role to use the synthetic demonstration.</p>
-            {[
-              {
-                id: "officer",
-                name: "Scrutiny officer",
-                desc: "Inspect evidence, run checks and review findings",
-                icon: ShieldCheck,
-              },
-              {
-                id: "institution",
-                name: "Institution applicant",
-                desc: "Create applications and submit evidence",
-                icon: Building2,
-              },
-              {
-                id: "auditor",
-                name: "Independent auditor",
-                desc: "Inspect evidence and the read-only audit trail",
-                icon: Fingerprint,
-              },
-            ].map((p) => (
-              <button
-                className="persona"
-                key={p.id}
-                disabled={busy}
-                onClick={() => void login(p.id)}
-              >
-                <p.icon size={23} />
-                <span>
-                  <strong>{p.name}</strong>
-                  <small>{p.desc}</small>
-                </span>
-                <ArrowRight size={20} />
+            <h2>Sign in to your workspace</h2>
+            <p>
+              Use a named local account, or explore the labelled demonstration.
+            </p>
+            <form
+              className="password-login"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const form = new FormData(e.currentTarget);
+                void perform(async () => {
+                  setUser(
+                    await api<User>("/auth/login", {
+                      method: "POST",
+                      body: JSON.stringify({
+                        email: form.get("email"),
+                        password: form.get("password"),
+                      }),
+                    }),
+                  );
+                  await loadApplications();
+                });
+              }}
+            >
+              <label>
+                Email
+                <input
+                  name="email"
+                  type="email"
+                  required
+                  autoComplete="username"
+                />
+              </label>
+              <label>
+                Password
+                <input
+                  name="password"
+                  type="password"
+                  required
+                  autoComplete="current-password"
+                />
+              </label>
+              <button className="primary full" disabled={busy}>
+                Sign in
               </button>
-            ))}
+            </form>
+            {authConfig.demo_login_enabled &&
+              [
+                {
+                  id: "officer",
+                  name: "Scrutiny officer",
+                  desc: "Inspect evidence, run checks and review findings",
+                  icon: ShieldCheck,
+                },
+                {
+                  id: "institution",
+                  name: "Institution applicant",
+                  desc: "Create applications and submit evidence",
+                  icon: Building2,
+                },
+                {
+                  id: "auditor",
+                  name: "Independent auditor",
+                  desc: "Inspect evidence and the read-only audit trail",
+                  icon: Fingerprint,
+                },
+              ].map((p) => (
+                <button
+                  className="persona"
+                  key={p.id}
+                  disabled={busy}
+                  onClick={() => void login(p.id)}
+                >
+                  <p.icon size={23} />
+                  <span>
+                    <strong>{p.name}</strong>
+                    <small>{p.desc}</small>
+                  </span>
+                  <ArrowRight size={20} />
+                </button>
+              ))}
           </div>
           <p className="login-note">
             Synthetic records · Draft consistency rules · No government
@@ -509,24 +596,26 @@ function App() {
               <small>{pretty(user.role)}</small>
             </div>
           </div>
-          <label className="switch-role">
-            Demo role
-            <select
-              value={
-                user.role === "OFFICER"
-                  ? "officer"
-                  : user.role === "AUDITOR"
-                    ? "auditor"
-                    : "institution"
-              }
-              onChange={(e) => void login(e.target.value)}
-              disabled={busy}
-            >
-              <option value="officer">Scrutiny officer</option>
-              <option value="institution">Institution applicant</option>
-              <option value="auditor">Read-only auditor</option>
-            </select>
-          </label>
+          {authConfig.demo_login_enabled && (
+            <label className="switch-role">
+              Demo role
+              <select
+                value={
+                  user.role === "OFFICER"
+                    ? "officer"
+                    : user.role === "AUDITOR"
+                      ? "auditor"
+                      : "institution"
+                }
+                onChange={(e) => void login(e.target.value)}
+                disabled={busy}
+              >
+                <option value="officer">Scrutiny officer</option>
+                <option value="institution">Institution applicant</option>
+                <option value="auditor">Read-only auditor</option>
+              </select>
+            </label>
+          )}
         </div>
       </aside>
       <div className="main-wrap">
@@ -538,25 +627,41 @@ function App() {
             <span className="status-dot" /> Local workspace{" "}
             <span className="divider" />
             <Badge tone="amber">Synthetic demonstration</Badge>
-            <label className="mobile-role">
-              Role
-              <select
-                aria-label="Demo role"
-                value={
-                  user.role === "OFFICER"
-                    ? "officer"
-                    : user.role === "AUDITOR"
-                      ? "auditor"
-                      : "institution"
-                }
-                onChange={(e) => void login(e.target.value)}
-                disabled={busy}
-              >
-                <option value="officer">Officer</option>
-                <option value="institution">Applicant</option>
-                <option value="auditor">Auditor</option>
-              </select>
-            </label>
+            {authConfig.demo_login_enabled && (
+              <label className="mobile-role">
+                Role
+                <select
+                  aria-label="Demo role"
+                  value={
+                    user.role === "OFFICER"
+                      ? "officer"
+                      : user.role === "AUDITOR"
+                        ? "auditor"
+                        : "institution"
+                  }
+                  onChange={(e) => void login(e.target.value)}
+                  disabled={busy}
+                >
+                  <option value="officer">Officer</option>
+                  <option value="institution">Applicant</option>
+                  <option value="auditor">Auditor</option>
+                </select>
+              </label>
+            )}
+            <button
+              className="text-button"
+              disabled={busy}
+              onClick={() =>
+                void perform(async () => {
+                  await api("/auth/logout", { method: "POST" });
+                  setUser(null);
+                  setData(null);
+                  setList([]);
+                })
+              }
+            >
+              Sign out
+            </button>
           </div>
         </header>
         <main className="main-content">
@@ -866,6 +971,10 @@ function App() {
                         ) : undefined
                       }
                     />
+                    <a className="upload-dashed" href="/v1/demo/fixtures.zip">
+                      <ArrowDownToLine size={16} />
+                      Download synthetic test pack
+                    </a>
                     {data.documents.map((d) => (
                       <button
                         key={d.id}
@@ -937,7 +1046,11 @@ function App() {
                               Original evidence{" "}
                               <span>Page {field?.page || 1}</span>
                             </div>
-                            {doc.status === "EXTRACTED" ? (
+                            {[
+                              "EXTRACTED",
+                              "MANUAL_EXTRACTION_REQUIRED",
+                              "OCR_REQUIRED",
+                            ].includes(doc.status) ? (
                               <div className="paper">
                                 <img
                                   src={
@@ -1015,7 +1128,10 @@ function App() {
                                     ) : (
                                       <>
                                         <Clock3 size={12} />
-                                        Unconfirmed
+                                        {f.recognition_quality ===
+                                        "LOW_RECOGNITION"
+                                          ? "Low OCR score · confirm manually"
+                                          : "Unconfirmed"}
                                       </>
                                     )}{" "}
                                     · Page {f.page}
@@ -1074,6 +1190,15 @@ function App() {
                                 </button>
                               )}
                             </div>
+                            <ProcessingTools
+                              docId={doc.id}
+                              processing={doc.processing}
+                              events={doc.verification_events}
+                              officer={!!isOfficer}
+                              busy={busy}
+                              run={perform}
+                              refresh={() => refresh()}
+                            />
                           </div>
                         </div>
                       </>
@@ -1083,6 +1208,7 @@ function App() {
                   </section>
                 </div>
               )}
+              {page === "Integrations" && <IntegrationsPanel />}
               {page === "Infrastructure" && (
                 <>
                   <section className="module-banner">
@@ -1312,6 +1438,18 @@ function App() {
               {page === "Findings" && (
                 <>
                   <div className="findings-toolbar">
+                    {isOfficer && (
+                      <button
+                        className="secondary"
+                        disabled={
+                          busy || !data.evaluation || data.evaluation.stale
+                        }
+                        onClick={() => void downloadPdfReport()}
+                      >
+                        <ArrowDownToLine size={15} />
+                        Export PDF
+                      </button>
+                    )}
                     <div className="search">
                       <Search size={17} />
                       <input
@@ -1836,6 +1974,7 @@ function FindingCard({
         </Badge>
       </div>
       <p>{f.explanation}</p>
+      {f.check_basis&&<details className="rule-trace"><summary>Inspect rule basis and regulatory context</summary><p>{f.check_basis}</p>{f.source_context&&<><a href={f.source_context.government_copy} target="_blank" rel="noreferrer">{f.source_context.document}</a><p>{f.source_context.applicability}</p></>}</details>}
       <div className="finding-bottom">
         <div className="evidence-links">
           {f.evidence.slice(0, 3).map((e) => (

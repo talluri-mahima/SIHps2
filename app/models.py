@@ -149,6 +149,37 @@ class Idempotency(Base):
     response_json: Mapped[str] = mapped_column(Text)
 
 
+class PageArtifact(Base):
+    __tablename__ = 'page_artifacts'
+    __table_args__ = (UniqueConstraint('document_id', 'page'),)
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=uid)
+    document_id: Mapped[str] = mapped_column(ForeignKey('documents.id'))
+    page: Mapped[int] = mapped_column(Integer)
+    image_key: Mapped[str] = mapped_column(String)
+    text_json: Mapped[str] = mapped_column(Text)
+    method: Mapped[str] = mapped_column(String)
+
+
+class ProcessingResult(Base):
+    __tablename__ = 'processing_results'
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=uid)
+    document_id: Mapped[str] = mapped_column(ForeignKey('documents.id'))
+    payload_json: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[str] = mapped_column(String, default=now)
+
+
+class VerificationEvent(Base):
+    __tablename__ = 'verification_events'
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=uid)
+    document_id: Mapped[str] = mapped_column(ForeignKey('documents.id'))
+    check_type: Mapped[str] = mapped_column(String)
+    mode: Mapped[str] = mapped_column(String)
+    status: Mapped[str] = mapped_column(String)
+    payload_json: Mapped[str] = mapped_column(Text)
+    actor: Mapped[str] = mapped_column(String)
+    created_at: Mapped[str] = mapped_column(String, default=now)
+
+
 @event.listens_for(Audit, 'before_update')
 @event.listens_for(Audit, 'before_delete')
 def immutable_audit(*_):

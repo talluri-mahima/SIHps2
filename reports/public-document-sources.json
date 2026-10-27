@@ -1,0 +1,73 @@
+{
+  "purpose": "Public real-layout evaluation, not model training or an accuracy benchmark",
+  "documents": [
+    {
+      "id": "tsm-occupancy",
+      "document_type": "OCCUPANCY",
+      "url": "https://tsm.ac.in/documents/1771588638822-Occupancy-Certificate.pdf",
+      "listing_url": "https://tsm.ac.in/mandatory-disclosure",
+      "retrieved_at": "2026-10-27T18:32:56.404054+00:00",
+      "authenticity": "INSTITUTION_PUBLISHED_NOT_ISSUER_VERIFIED",
+      "license": "NOT_ESTABLISHED",
+      "training_permission": "NOT_ESTABLISHED",
+      "use": "LOCAL_LAYOUT_EVALUATION_ONLY",
+      "ground_truth": "NOT_YET_INDEPENDENTLY_LABELLED",
+      "resolved_url": "https://tsm.ac.in/documents/1771588638822-Occupancy-Certificate.pdf",
+      "status": "DOWNLOADED",
+      "bytes": 3043633,
+      "sha256": "ce8b6086f63c817c2b7252f030aca0c70c8c4351ef5e69cbecaa14dafe0fd955",
+      "local_file": ".data/public-documents/tsm-occupancy.pdf"
+    },
+    {
+      "id": "tsm-fire",
+      "document_type": "FIRE",
+      "url": "https://tsm.ac.in/documents/1771588643417-fire-service-licence-2023-2024.pdf",
+      "listing_url": "https://tsm.ac.in/mandatory-disclosure",
+      "retrieved_at": "2026-10-27T18:32:59.686731+00:00",
+      "authenticity": "INSTITUTION_PUBLISHED_NOT_ISSUER_VERIFIED",
+      "license": "NOT_ESTABLISHED",
+      "training_permission": "NOT_ESTABLISHED",
+      "use": "LOCAL_LAYOUT_EVALUATION_ONLY",
+      "ground_truth": "NOT_YET_INDEPENDENTLY_LABELLED",
+      "resolved_url": "https://tsm.ac.in/documents/1771588643417-fire-service-licence-2023-2024.pdf",
+      "status": "DOWNLOADED",
+      "bytes": 518442,
+      "sha256": "9a4501ecca10c68957d445853fa27ef8e052ecf0281a89d94e6fa7766eb7cbc0",
+      "local_file": ".data/public-documents/tsm-fire.pdf"
+    },
+    {
+      "id": "mes-disclosure",
+      "document_type": "MIXED_DISCLOSURE",
+      "url": "https://old.mesce.ac.in/pdf/mand.pdf",
+      "listing_url": "https://old.mesce.ac.in/pdf/mand.pdf",
+      "retrieved_at": "2026-10-27T18:33:00.997035+00:00",
+      "authenticity": "INSTITUTION_PUBLISHED_NOT_ISSUER_VERIFIED",
+      "license": "NOT_ESTABLISHED",
+      "training_permission": "NOT_ESTABLISHED",
+      "use": "LOCAL_LAYOUT_EVALUATION_ONLY",
+      "ground_truth": "NOT_YET_INDEPENDENTLY_LABELLED",
+      "resolved_url": "https://old.mesce.ac.in/pdf/mand.pdf",
+      "status": "DOWNLOADED",
+      "bytes": 1035278,
+      "sha256": "1a3b015e32683fe2830f4193dc3197307d4d6c895f49ab3b34ccbe8168bb7c6f",
+      "local_file": ".data/public-documents/mes-disclosure.pdf"
+    },
+    {
+      "id": "bit-sindri-eoa-2026",
+      "document_type": "EOA",
+      "url": "https://www.bitsindri.ac.in/wp-content/uploads/2026/04/Extension-of-Approval-EOA-Report-2026-27.pdf",
+      "listing_url": "https://www.bitsindri.ac.in/wp-content/uploads/2026/04/Extension-of-Approval-EOA-Report-2026-27.pdf",
+      "retrieved_at": "2026-10-27T18:33:01.609741+00:00",
+      "authenticity": "INSTITUTION_PUBLISHED_NOT_ISSUER_VERIFIED",
+      "license": "NOT_ESTABLISHED",
+      "training_permission": "NOT_ESTABLISHED",
+      "use": "LOCAL_LAYOUT_EVALUATION_ONLY",
+      "ground_truth": "NOT_YET_INDEPENDENTLY_LABELLED",
+      "resolved_url": "https://www.bitsindri.ac.in/wp-content/uploads/2026/04/Extension-of-Approval-EOA-Report-2026-27.pdf",
+      "status": "DOWNLOADED",
+      "bytes": 227930,
+      "sha256": "a37a6618fe15b16c5fd165e564a86bcf0f27a7397d8eb903949033a60519f7a9",
+      "local_file": ".data/public-documents/bit-sindri-eoa-2026.pdf"
+    }
+  ]
+}

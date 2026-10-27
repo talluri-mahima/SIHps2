@@ -1,0 +1,68 @@
+{
+  "notice": "Two development pages only; no independent field labels, CER/WER or real-world accuracy established.",
+  "real_world_accuracy_established": false,
+  "documents": [
+    {
+      "document": "tsm-fire",
+      "page": 1,
+      "source_sha256": "9a4501ecca10c68957d445853fa27ef8e052ecf0281a89d94e6fa7766eb7cbc0",
+      "provider": "rapidocr",
+      "method": "CPU_OCR_RAPIDOCR",
+      "status": "COMPLETED",
+      "elapsed_seconds": 7.887,
+      "recognized_regions": 40,
+      "floor_mentions": 1,
+      "expiry_label_mentions": 1,
+      "automatic_confirmed_fields": 0
+    },
+    {
+      "document": "tsm-fire",
+      "page": 1,
+      "source_sha256": "9a4501ecca10c68957d445853fa27ef8e052ecf0281a89d94e6fa7766eb7cbc0",
+      "provider": "paddleocr",
+      "method": "CPU_OCR_PADDLEOCR",
+      "status": "COMPLETED",
+      "elapsed_seconds": 107.001,
+      "recognized_regions": 33,
+      "floor_mentions": 1,
+      "expiry_label_mentions": 1,
+      "automatic_confirmed_fields": 0
+    },
+    {
+      "document": "tsm-occupancy",
+      "page": 2,
+      "source_sha256": "ce8b6086f63c817c2b7252f030aca0c70c8c4351ef5e69cbecaa14dafe0fd955",
+      "provider": "rapidocr",
+      "method": "CPU_OCR_RAPIDOCR",
+      "status": "COMPLETED",
+      "elapsed_seconds": 18.874,
+      "recognized_regions": 144,
+      "floor_mentions": 1,
+      "expiry_label_mentions": 0,
+      "automatic_confirmed_fields": 0
+    },
+    {
+      "document": "tsm-occupancy",
+      "page": 2,
+      "source_sha256": "ce8b6086f63c817c2b7252f030aca0c70c8c4351ef5e69cbecaa14dafe0fd955",
+      "provider": "paddleocr",
+      "method": "CPU_OCR_PADDLEOCR",
+      "status": "COMPLETED",
+      "elapsed_seconds": 121.006,
+      "recognized_regions": 180,
+      "floor_mentions": 1,
+      "expiry_label_mentions": 0,
+      "automatic_confirmed_fields": 0
+    }
+  ],
+  "paddle_model_sha256": {
+    "detection/config.json": "7ac1c33f377ba58561f4b89d3180b6add2b7c5c60a4edac90fa4e0ceccdc6665",
+    "detection/inference.json": "05feef1acb00aa4cd7362b15f7f501fc4f99d7b1fa73c1c871e0c7b1504b0f5c",
+    "detection/inference.pdiparams": "afa1820cb16c1fd0dad589d0f8b389139061c1ef6d68019685fd07be997dda5b",
+    "detection/inference.yml": "98069072e1b6b37d727fd9d9f11725faa46d6ea0de012f2ed26caea011c37699",
+    "recognition/config.json": "16103ac291a82fca50f0bb000d62a4b8168f6042f03c89c44cf32f241d1eb1f2",
+    "recognition/inference.json": "fd1b6ec722ea841a72d3ba43e527df1d1066d5d7808e0503ee3eec7265188753",
+    "recognition/inference.pdiparams": "3ec8a97ed6cefe8568d3e2ee90bb193299b566a7661aa4fd52d224b96b59f66b",
+    "recognition/inference.yml": "27e91d0582f40168aa218303c76e184bc78fa7a5d105aad0cfbad8458b441067"
+  }
+}

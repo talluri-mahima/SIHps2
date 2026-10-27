@@ -1,9 +1,15 @@
 {
   "id": "evidence-consistency-demo",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "status": "DRAFT",
   "policy_review": "PENDING",
   "description": "Data-consistency checks only. No approved regulatory thresholds or AICTE approval decisions.",
+  "source_context": {
+    "document": "AICTE Approval Process Handbook 2024-25 to 2026-27",
+    "government_copy": "https://cdnbbsr.s3waas.gov.in/s35938b4d054136e5d59ada6ec9c295d7a/uploads/2025/03/2025031399.pdf",
+    "clauses": ["1.8(e)-(g): scrutiny, authenticity and rectification", "Annexure 1, section 1.1: context-specific submitted evidence", "6.17(f)-(i): building plans, occupancy/completion and fire evidence"],
+    "applicability": "These sources explain the regulatory context. The executable checks remain draft documentary-consistency checks; applicable amendments and policy approval are pending. Private-lease floor-scope provisions are not universal requirements."
+  },
   "rules": [
     {"id": "DOC-COMPLETE-001", "title": "Expected demonstration evidence", "basis": "Demo workflow checklist; not a certified APH requirement"},
     {"id": "INFRA-SCOPE-001", "title": "Claimed floors versus occupancy coverage", "basis": "Submitted documentary scope comparison; policy review pending"},

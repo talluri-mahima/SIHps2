@@ -1,0 +1,152 @@
+{
+  "notice": "Coverage inspection only. No real-world accuracy claim. Public PDFs remain local and ignored.",
+  "documents": [
+    {
+      "id": "tsm-occupancy",
+      "sha256": "ce8b6086f63c817c2b7252f030aca0c70c8c4351ef5e69cbecaa14dafe0fd955",
+      "pages": 4,
+      "native_text_pages": 4,
+      "status": "MANUAL_EXTRACTION_REQUIRED",
+      "candidate_keys": [],
+      "layout_observation_counts": {
+        "FLOOR_NOTATION_MENTION": 1
+      },
+      "page_classifications": [
+        {
+          "kind": "OCCUPANCY",
+          "basis": "KEYWORD_HEURISTIC_NOT_CALIBRATED",
+          "matches": [
+            "completion certificate"
+          ],
+          "page": 4
+        }
+      ],
+      "metrics": {
+        "elapsed_seconds": 0.081,
+        "ocr_pages": 0,
+        "ocr_provider": "rapidocr",
+        "forced_ocr": false,
+        "low_recognition_lines_omitted": 0,
+        "candidate_fields": 0,
+        "low_recognition_candidates": 0,
+        "automatic_accepted_critical_fields": 0,
+        "duplicate_keys_omitted": []
+      },
+      "independently_labelled": false,
+      "accuracy": "NOT_MEASURED",
+      "issuer_authentication": "NOT_PERFORMED"
+    },
+    {
+      "id": "tsm-fire",
+      "sha256": "9a4501ecca10c68957d445853fa27ef8e052ecf0281a89d94e6fa7766eb7cbc0",
+      "pages": 1,
+      "native_text_pages": 1,
+      "status": "MANUAL_EXTRACTION_REQUIRED",
+      "candidate_keys": [],
+      "layout_observation_counts": {
+        "EXPIRY_LABEL_MENTION": 1,
+        "FLOOR_NOTATION_MENTION": 1
+      },
+      "page_classifications": [
+        {
+          "kind": "FIRE_CERTIFICATE",
+          "basis": "KEYWORD_HEURISTIC_NOT_CALIBRATED",
+          "matches": [
+            "fire & rescue service licence"
+          ],
+          "page": 1
+        }
+      ],
+      "metrics": {
+        "elapsed_seconds": 0.015,
+        "ocr_pages": 0,
+        "ocr_provider": "rapidocr",
+        "forced_ocr": false,
+        "low_recognition_lines_omitted": 0,
+        "candidate_fields": 0,
+        "low_recognition_candidates": 0,
+        "automatic_accepted_critical_fields": 0,
+        "duplicate_keys_omitted": []
+      },
+      "independently_labelled": false,
+      "accuracy": "NOT_MEASURED",
+      "issuer_authentication": "NOT_PERFORMED"
+    },
+    {
+      "id": "mes-disclosure",
+      "sha256": "1a3b015e32683fe2830f4193dc3197307d4d6c895f49ab3b34ccbe8168bb7c6f",
+      "pages": 28,
+      "native_text_pages": 28,
+      "status": "MANUAL_EXTRACTION_REQUIRED",
+      "candidate_keys": [],
+      "layout_observation_counts": {
+        "EXPIRY_LABEL_MENTION": 1
+      },
+      "page_classifications": [
+        {
+          "kind": "OCCUPANCY",
+          "basis": "KEYWORD_HEURISTIC_NOT_CALIBRATED",
+          "matches": [
+            "occupancy certificate"
+          ],
+          "page": 21
+        }
+      ],
+      "metrics": {
+        "elapsed_seconds": 0.519,
+        "ocr_pages": 0,
+        "ocr_provider": "rapidocr",
+        "forced_ocr": false,
+        "low_recognition_lines_omitted": 0,
+        "candidate_fields": 0,
+        "low_recognition_candidates": 0,
+        "automatic_accepted_critical_fields": 0,
+        "duplicate_keys_omitted": []
+      },
+      "independently_labelled": false,
+      "accuracy": "NOT_MEASURED",
+      "issuer_authentication": "NOT_PERFORMED"
+    },
+    {
+      "id": "bit-sindri-eoa-2026",
+      "sha256": "a37a6618fe15b16c5fd165e564a86bcf0f27a7397d8eb903949033a60519f7a9",
+      "pages": 6,
+      "native_text_pages": 6,
+      "status": "MANUAL_EXTRACTION_REQUIRED",
+      "candidate_keys": [],
+      "layout_observation_counts": {},
+      "page_classifications": [
+        {
+          "kind": "PRIOR_EOA",
+          "basis": "KEYWORD_HEURISTIC_NOT_CALIBRATED",
+          "matches": [
+            "extension of approval"
+          ],
+          "page": 1
+        },
+        {
+          "kind": "PRIOR_EOA",
+          "basis": "KEYWORD_HEURISTIC_NOT_CALIBRATED",
+          "matches": [
+            "extension of approval"
+          ],
+          "page": 5
+        }
+      ],
+      "metrics": {
+        "elapsed_seconds": 0.098,
+        "ocr_pages": 0,
+        "ocr_provider": "rapidocr",
+        "forced_ocr": false,
+        "low_recognition_lines_omitted": 0,
+        "candidate_fields": 0,
+        "low_recognition_candidates": 0,
+        "automatic_accepted_critical_fields": 0,
+        "duplicate_keys_omitted": []
+      },
+      "independently_labelled": false,
+      "accuracy": "NOT_MEASURED",
+      "issuer_authentication": "NOT_PERFORMED"
+    }
+  ]
+}

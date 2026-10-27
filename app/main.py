@@ -2,6 +2,9 @@ import hashlib
 import json
 import secrets
 import threading
+import subprocess
+import sys
+import os
 from contextlib import asynccontextmanager
 from datetime import date, datetime, timedelta, timezone
 from typing import Literal
@@ -31,6 +34,12 @@ async def lifespan(app):
     from .seed import seed
     seed()
     with WRITE_LOCK, Session.begin() as db:
+        # Backfill previews for pre-migration documents without altering originals/facts.
+        for d in db.scalars(select(m.Document).where(m.Document.status.in_(['EXTRACTED','MANUAL_EXTRACTION_REQUIRED','OCR_REQUIRED']))):
+            if not db.scalar(select(m.PageArtifact.id).where(m.PageArtifact.document_id==d.id).limit(1)):
+                job=db.scalar(select(m.Job).where(m.Job.document_id==d.id))
+                if job and job.attempt<3:
+                    job.status='RETRY'
         jobs = db.scalars(select(m.Job).where(m.Job.status.in_(['QUEUED', 'PROCESSING', 'RETRY']))).all()
         ids = []
         for j in jobs:
@@ -123,10 +132,41 @@ class SourceCheck(StrictModel):
     note: str = PField(min_length=10, max_length=1000)
 
 
+class ManualField(StrictModel):
+    key: str = PField(min_length=3,max_length=60)
+    raw_value: str = PField(min_length=1,max_length=200)
+    page: int = PField(ge=1,le=30)
+    bbox: list[float]
+    reason: str = PField(min_length=10,max_length=500)
+
+
+class Resolution(StrictModel):
+    evaluation_id: str
+    supporting_document_ids: list[str]
+    reason: str = PField(min_length=10,max_length=1000)
+
+
 @app.get('/v1/health')
 def health():
     return {'status': 'ok', 'version': SOFTWARE_VERSION, 'profile': 'development', 'production_ready': False,
-            'gates_pending': ['OIDC', 'POSTGRES_RLS', 'MALWARE_SCANNING', 'OS_PARSER_ISOLATION', 'OCR', 'POLICY_APPROVAL', 'SEALED_BENCHMARK']}
+            'gates_pending': ['OIDC', 'POSTGRES_RLS', 'MALWARE_SCANNING', 'OS_PARSER_NETWORK_ISOLATION', 'POLICY_APPROVAL', 'SEALED_BENCHMARK']}
+
+
+@app.get('/v1/integrations')
+def integrations(user=Depends(current_user),db=Depends(db_session)):
+    from .integrations import readiness
+    return readiness(db)
+
+
+@app.get('/v1/auth/config')
+def auth_config():
+    return {'demo_login_enabled':os.getenv('AICTE_DEMO_LOGIN','true').lower()=='true','password_login_enabled':True,'oidc_connected':False}
+
+
+@app.get('/v1/demo/fixtures.zip')
+def demonstration_pack(user=Depends(current_user)):
+    from .demo_pack import zip_bytes
+    return Response(zip_bytes(),media_type='application/zip',headers={'Content-Disposition':'attachment; filename="synthetic-evidence-pack.zip"'})
 
 
 @app.get('/v1/dev/personas')
@@ -147,6 +187,8 @@ def issue_session(db, user, response):
 
 @app.post('/v1/dev/session/{persona}')
 def demo_session(persona: Literal['officer', 'institution', 'auditor'], response: Response, request: Request):
+    if os.getenv('AICTE_DEMO_LOGIN','true').lower()!='true':
+        raise HTTPException(404,'Demo sign-in disabled')
     if request.client and request.client.host not in {'127.0.0.1', '::1', 'testclient'}:
         raise HTTPException(403, 'Local development access only')
     with WRITE_LOCK, Session.begin() as db:
@@ -231,7 +273,9 @@ def application_detail(app_id: str, user=Depends(current_user), db=Depends(db_se
             'checklist': [{'kind': k, 'received': any(d.kind == k for d in docs)} for k in CHECKLISTS[a.category]],
             'documents': [{'id': d.id, 'kind': d.kind, 'version': d.version, 'filename': d.filename, 'status': d.status,
                            'sha256': d.sha256, 'pages': d.page_count, 'source_status': d.source_status, 'source_mode': d.source_mode,
-                           'fields': list(latest_fields(db, d.id).values())} for d in docs],
+                           'fields': list(latest_fields(db, d.id).values()),
+                           'processing':json.loads(p.payload_json) if (p:=db.scalar(select(m.ProcessingResult).where(m.ProcessingResult.document_id==d.id).order_by(m.ProcessingResult.created_at.desc()).limit(1))) else None,
+                           'verification_events':[{'id':v.id,'type':v.check_type,'mode':v.mode,'status':v.status,'at':v.created_at,'payload':json.loads(v.payload_json)} for v in db.scalars(select(m.VerificationEvent).where(m.VerificationEvent.document_id==d.id).order_by(m.VerificationEvent.created_at.desc()))]} for d in docs],
             'evaluation': evaluation, 'document_kinds': KINDS}
 
 
@@ -269,7 +313,7 @@ async def upload(app_id: str, file: UploadFile = File(...), kind: str = Form(...
         db.add(j)
         db.flush()
         invalidate(db, a, user.id, {'document_id': d.id, 'kind': kind, 'version': d.version})
-        audit(db, a, user.id, 'DOCUMENT_SUBMITTED', {'document_id': d.id, 'sha256': sha, 'scan_mode': 'DEVELOPMENT_NO_MALWARE_PROVIDER'})
+        audit(db, a, user.id, 'DOCUMENT_SUBMITTED', {'document_id': d.id, 'sha256': sha, 'scan_mode':os.getenv('AICTE_MALWARE_SCANNER','none'),'scan_status':'PENDING'})
         result = {'document_id': d.id, 'job_id': j.id, 'version': d.version}
         db.add(m.Idempotency(key=idem, payload_hash=payload_hash, response_json=canonical(result)))
     threading.Thread(target=run_job, args=(result['job_id'],), daemon=True).start()
@@ -287,13 +331,102 @@ def original(doc_id: str, user=Depends(current_user), db=Depends(db_session)):
 @app.get('/v1/documents/{doc_id}/pages/{page_no}')
 def page_image(doc_id: str, page_no: int, user=Depends(current_user), db=Depends(db_session)):
     _, d = document_scope(db, user, doc_id)
-    if d.status != 'EXTRACTED' or not 1 <= page_no <= d.page_count:
+    if d.status not in {'EXTRACTED','MANUAL_EXTRACTION_REQUIRED','OCR_REQUIRED'} or not 1 <= page_no <= d.page_count:
         raise HTTPException(404, 'Page unavailable')
-    # Small accepted native PDFs only; general rendering isolation remains gated.
-    import pymupdf as fitz
-    with fitz.open(DATA / 'objects' / d.object_key) as pdf:
-        data = pdf[page_no-1].get_pixmap(matrix=fitz.Matrix(1.25, 1.25), alpha=False).tobytes('png')
-    return Response(data, media_type='image/png')
+    artifact=db.scalar(select(m.PageArtifact).where(m.PageArtifact.document_id==doc_id,m.PageArtifact.page==page_no))
+    if not artifact:
+        raise HTTPException(409,'Derived page is being generated; refresh shortly')
+    return FileResponse(DATA/'derived'/artifact.image_key,media_type='image/png')
+
+
+@app.get('/v1/documents/{doc_id}/text')
+def page_text(doc_id: str,user=Depends(current_user),db=Depends(db_session)):
+    document_scope(db,user,doc_id)
+    return {'pages':[{'page':p.page,'method':p.method,'lines':json.loads(p.text_json)} for p in db.scalars(select(m.PageArtifact).where(m.PageArtifact.document_id==doc_id).order_by(m.PageArtifact.page))]}
+
+
+@app.post('/v1/documents/{doc_id}/fields',status_code=201)
+def add_manual_field(doc_id: str,body:ManualField,user=Depends(current_user)):
+    officer(user)
+    if body.key not in ALLOWED or len(body.bbox)!=4 or not all(0<=v<=1 for v in body.bbox) or not(body.bbox[0]<body.bbox[2] and body.bbox[1]<body.bbox[3]):
+        raise HTTPException(422,'Unsupported field or invalid normalized source region')
+    with WRITE_LOCK,Session.begin() as db:
+        a,d=document_scope(db,user,doc_id,True)
+        if not db.scalar(select(m.PageArtifact).where(m.PageArtifact.document_id==doc_id,m.PageArtifact.page==body.page)):
+            raise HTTPException(422,'Source page does not exist')
+        if body.key in latest_fields(db,doc_id):
+            raise HTTPException(409,'Field already exists; correct it through a revision')
+        try:
+            from .candidates import candidate_value
+            value=normalize(body.key,candidate_value(body.key,body.raw_value))
+        except Exception:
+            raise HTTPException(422,'Unsupported or ambiguous field value')
+        f=m.Field(document_id=doc_id,key=body.key,raw=body.raw_value,value_json=canonical(value),page=body.page,bbox_json=canonical(body.bbox),engine='MANUAL_REVIEWER_TRANSCRIPTION',confirmed_by=user.id,reason=body.reason)
+        db.add(f);db.flush()
+        invalidate(db,a,user.id,{'manual_field_id':f.id})
+        audit(db,a,user.id,'MANUAL_EVIDENCE_FACT_ADDED',{'field_id':f.id,'page':body.page,'reason':body.reason})
+        return {'id':f.id}
+
+
+@app.post('/v1/documents/{doc_id}/signature-checks',status_code=201)
+def signature_check(doc_id:str,user=Depends(current_user)):
+    officer(user)
+    with Session() as db:
+        _,d=document_scope(db,user,doc_id)
+        if d.status not in {'EXTRACTED','MANUAL_EXTRACTION_REQUIRED','OCR_REQUIRED'}:
+            raise HTTPException(409,'Wait for document processing before signature checks')
+        object_key=d.object_key;doc_hash=d.sha256
+    try:
+        command=subprocess.run([sys.executable,'-m','app.verify',str(DATA/'objects'/object_key)],cwd=ROOT,capture_output=True,text=True,timeout=40)
+        result=json.loads(command.stdout)
+    except Exception:
+        result={'status':'VALIDATION_INCONCLUSIVE','mode':'LOCAL_CRYPTOGRAPHIC','network_fetching':False,'error':'VALIDATION_BUDGET_OR_PROCESS_FAILURE'}
+    result['document_sha256']=doc_hash
+    with WRITE_LOCK,Session.begin() as db:
+        a,d=document_scope(db,user,doc_id,True)
+        v=m.VerificationEvent(document_id=doc_id,check_type='PDF_SIGNATURE',mode='LOCAL_CRYPTOGRAPHIC',status=result['status'],payload_json=canonical(result),actor=user.id)
+        db.add(v);db.flush()
+        invalidate(db,a,user.id,{'signature_check_id':v.id})
+        audit(db,a,user.id,'SIGNATURE_CHECK_RECORDED',{'check_id':v.id,'document_id':doc_id,'status':v.status})
+        return {'id':v.id,**result}
+
+
+@app.post('/v1/jobs/{job_id}/retry',status_code=202)
+def retry_job(job_id:str,user=Depends(current_user)):
+    with WRITE_LOCK,Session.begin() as db:
+        job=db.get(m.Job,job_id)
+        if not job:
+            raise HTTPException(404,'Job not found')
+        a,_=document_scope(db,user,job.document_id,True)
+        if job.status!='FAILED' or job.attempt>=3:
+            raise HTTPException(409,'Retry unavailable or attempt budget exhausted')
+        job.status='RETRY'
+        audit(db,a,user.id,'EXTRACTION_RETRY_REQUESTED',{'job_id':job.id})
+    threading.Thread(target=run_job,args=(job_id,),daemon=True).start()
+    return {'id':job_id,'status':'RETRY'}
+
+
+@app.post('/v1/documents/{doc_id}/qr-checks',status_code=201)
+def qr_check(doc_id:str,user=Depends(current_user)):
+    officer(user)
+    with Session() as db:
+        _,d=document_scope(db,user,doc_id)
+        if not db.scalar(select(m.PageArtifact.id).where(m.PageArtifact.document_id==doc_id).limit(1)):
+            raise HTTPException(409,'Derived pages are not ready')
+        document_hash=d.sha256
+    try:
+        command=subprocess.run([sys.executable,'-m','app.qr',str(DATA/'derived'/doc_id)],cwd=ROOT,capture_output=True,text=True,timeout=40)
+        result=json.loads(command.stdout)
+    except Exception:
+        result={'status':'DECODE_INCONCLUSIVE','mode':'LOCAL_DECODE_ONLY','network_requests':0}
+    result['document_sha256']=document_hash
+    with WRITE_LOCK,Session.begin() as db:
+        a,_=document_scope(db,user,doc_id,True)
+        event=m.VerificationEvent(document_id=doc_id,check_type='QR_REFERENCE',mode='LOCAL_DECODE_ONLY',status=result['status'],payload_json=canonical(result),actor=user.id)
+        db.add(event);db.flush()
+        invalidate(db,a,user.id,{'qr_check_id':event.id})
+        audit(db,a,user.id,'QR_REFERENCE_INSPECTED',{'check_id':event.id,'status':event.status,'network_requests':0})
+        return {'id':event.id,**result}
 
 
 @app.get('/v1/documents/{doc_id}/versions')
@@ -343,6 +476,7 @@ def source_check(doc_id: str, body: SourceCheck, user=Depends(current_user)):
     with WRITE_LOCK, Session.begin() as db:
         a, d = document_scope(db, user, doc_id, True)
         d.source_status, d.source_mode, d.source_note = body.status, body.mode, body.note
+        db.add(m.VerificationEvent(document_id=doc_id,check_type='ISSUER_OBSERVATION',mode=body.mode,status=body.status,payload_json=canonical({'note':body.note,'document_sha256':d.sha256}),actor=user.id))
         invalidate(db, a, user.id, {'source_document': doc_id})
         audit(db, a, user.id, 'SOURCE_ATTESTATION_RECORDED', {'document_id': doc_id, 'mode': body.mode, 'status': body.status, 'note': body.note})
         return {'status': d.source_status, 'mode': d.source_mode}
@@ -364,6 +498,44 @@ def manifest(evaluation_id: str, user=Depends(current_user), db=Depends(db_sessi
         raise HTTPException(404, 'Evaluation not found')
     scoped(db, user, ev.application_id)
     return {'manifest': json.loads(ev.manifest_json), 'sha256': ev.manifest_hash, 'result': json.loads(ev.result_json)}
+
+
+@app.get('/v1/applications/{app_id}/evaluations')
+def evaluation_history(app_id:str,user=Depends(current_user),db=Depends(db_session)):
+    a=scoped(db,user,app_id)
+    return [{'id':ev.id,'revision':ev.revision,'stale':ev.revision!=a.revision,'manifest_hash':ev.manifest_hash,'at':ev.created_at,
+             'findings':[{'id':f.id,'state':f.state,'version':f.version,**json.loads(f.body_json)} for f in db.scalars(select(m.Finding).where(m.Finding.evaluation_id==ev.id))]}
+            for ev in db.scalars(select(m.Evaluation).where(m.Evaluation.application_id==app_id).order_by(m.Evaluation.created_at.desc()))]
+
+
+@app.post('/v1/findings/{finding_id}/resolve-after-review')
+def resolve_after_review(finding_id:str,body:Resolution,if_match:str=Header(...,alias='If-Match'),user=Depends(current_user)):
+    officer(user)
+    with WRITE_LOCK,Session.begin() as db:
+        f=db.get(m.Finding,finding_id)
+        if not f:raise HTTPException(404,'Finding not found')
+        a=scoped(db,user,f.application_id,True)
+        if str(f.version)!=if_match:raise HTTPException(412,'Finding changed; refresh the ledger')
+        if f.state not in {'REVIEWER_CONFIRMED','VERIFICATION_PENDING','RESPONSE_RECEIVED'}:
+            raise HTTPException(409,'Only an existing reviewed or pending observation can be resolved')
+        current=db.scalar(select(m.Evaluation).where(m.Evaluation.application_id==a.id).order_by(m.Evaluation.created_at.desc()).limit(1))
+        if not current or current.id!=body.evaluation_id or current.revision!=a.revision or current.id==f.evaluation_id:
+            raise HTTPException(409,'A newer current evaluation is required')
+        old=json.loads(f.body_json)
+        if any(item['rule_id']==old['rule_id'] and item['module']==old['module'] for item in json.loads(current.result_json)['findings']):
+            raise HTTPException(409,'The current evaluation still has an unresolved check for this rule and module')
+        ids=set(body.supporting_document_ids)
+        if not ids:raise HTTPException(422,'Select supporting replacement evidence')
+        current_documents={d.id:d for d in latest_documents(db,a.id)}
+        for doc_id in ids:
+            d=current_documents.get(doc_id)
+            if not d:raise HTTPException(404,'Current supporting document not found')
+            facts=latest_fields(db,d.id)
+            if not facts or any(not field['confirmed_by'] for field in facts.values()) or d.source_status!='VERIFIED':
+                raise HTTPException(409,'Confirm supporting facts and record explicit source verification first')
+        f.state='RESOLVED';f.version+=1;f.updated_at=m.now()
+        audit(db,a,user.id,'HISTORICAL_FINDING_RESOLVED',{'finding_id':f.id,'evaluation_id':current.id,'supporting_documents':sorted(ids),'source_modes':{i:current_documents[i].source_mode for i in sorted(ids)},'reason':body.reason})
+        return {'state':f.state,'version':f.version}
 
 
 @app.post('/v1/findings/{finding_id}/actions')
@@ -425,6 +597,16 @@ def read_export(export_id: str, user=Depends(current_user), db=Depends(db_sessio
         raise HTTPException(404, 'Export not found')
     scoped(db, user, row.application_id)
     return {'id': row.id, 'sha256': row.sha256, 'report': json.loads(row.body_json)}
+
+
+@app.get('/v1/exports/{export_id}/pdf')
+def read_export_pdf(export_id:str,user=Depends(current_user),db=Depends(db_session)):
+    row=db.get(m.Export,export_id)
+    if not row:raise HTTPException(404,'Export not found')
+    scoped(db,user,row.application_id)
+    from .report import report_pdf
+    data=report_pdf(json.loads(row.body_json),row.sha256)
+    return Response(data,media_type='application/pdf',headers={'Content-Disposition':'attachment; filename="synthetic-review-report.pdf"','X-Report-Content-SHA256':row.sha256,'X-PDF-SHA256':hashlib.sha256(data).hexdigest()})
 
 
 @app.get('/v1/applications/{app_id}/audit')

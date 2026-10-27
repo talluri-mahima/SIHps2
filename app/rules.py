@@ -27,11 +27,13 @@ def evaluate(category, evaluation_date, documents):
     by_kind = {d['kind']: d for d in documents}
 
     def emit(rule, title, explanation, evidence=(), reason='EVIDENCE_GAP', module='Documents'):
+        specification=next(r for r in RULEPACK['rules'] if r['id']==rule)
         findings.append({'rule_id': rule, 'rule_version': RULEPACK['version'], 'title': title,
                          'explanation': explanation, 'reason': reason, 'module': module,
                          'severity': 'REVIEW_NEEDED', 'certainty': 'UNRESOLVED',
                          'verification_status': 'NOT_ESTABLISHED', 'evidence': list(evidence),
-                         'required_action': 'Review the linked evidence and request specific clarification where needed.'})
+                         'required_action': 'Review the linked evidence and request specific clarification where needed.',
+                         'check_basis':specification['basis'],'source_context':RULEPACK.get('source_context')})
 
     def accepted(kind, key):
         d = by_kind.get(kind)

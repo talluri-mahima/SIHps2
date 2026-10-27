@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "at": "2026-10-27T19:15:30.838224+00:00",
+  "application_id": "61c3d62c-40ee-44c5-b6ed-8abb2b555dfd",
+  "document_id": "d37b129e-e96a-41b4-b8a0-4ca26220f1e0",
+  "elapsed_seconds": 16.493,
+  "checks": [
+    "Named local password login",
+    "Applicant upload",
+    "Actual Defender scan",
+    "Actual PaddleOCR extraction",
+    "Three exact synthetic expected fields",
+    "No automatic critical confirmation",
+    "Authorized stored preview",
+    "Offline signature check"
+  ],
+  "fixture": "SYNTHETIC_DEVELOPMENT_NOT_HELD_OUT",
+  "real_world_accuracy_established": false
+}

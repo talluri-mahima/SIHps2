@@ -1,0 +1,16 @@
+{
+  "dataset": "synthetic-development-document-check-v1",
+  "split": "DEVELOPMENT_NOT_HELD_OUT",
+  "independent_labels": false,
+  "notice": "Engineering fixtures only. Not a real-document accuracy benchmark or independent validation.",
+  "cases": [
+    {"id":"native-occupancy-alternative","kind":"OCCUPANCY","scan":false,"lines":["Building: BLOCK C","Floors covered: Ground floor and First floor","Expiry date: 30 June 2027"],"expected":{"BUILDING":"BLOCK C","COVERED_FLOORS":["G","1"],"VALID_UNTIL":"2027-06-30"}},
+    {"id":"scan-occupancy","kind":"OCCUPANCY","scan":true,"lines":["Building: BLOCK C","Floors covered: G, 1","Valid until: 2027-06-30"],"expected":{"BUILDING":"BLOCK C","COVERED_FLOORS":["G","1"],"VALID_UNTIL":"2027-06-30"}},
+    {"id":"native-fdr-crores","kind":"FDR_ADVICE","scan":false,"lines":["FDR No.: 00-7781","Principal amount: INR 2 crore","Lien amount: Rs. 1.80 crore","Name of depositor: EXAMPLE EDUCATIONAL TRUST","Bank name: SYNTHETIC BANK"],"expected":{"FDR_NUMBER":"007781","PRINCIPAL_INR":20000000,"LIEN_INR":18000000,"HOLDER":"EXAMPLE EDUCATIONAL TRUST","BANK":"SYNTHETIC BANK"}},
+    {"id":"scan-fdr","kind":"FDR_ADVICE","scan":true,"lines":["FDR No.: 007781","Principal amount: 20,000,000","Lien amount: 18,000,000"],"expected":{"FDR_NUMBER":"007781","PRINCIPAL_INR":20000000,"LIEN_INR":18000000}},
+    {"id":"native-dpr","kind":"DPR","scan":false,"lines":["FDR number: 007781","Unrestricted funding: Rs. 200 lakh","Account holder: EXAMPLE EDUCATIONAL TRUST","Issuing bank: SYNTHETIC BANK"],"expected":{"FDR_NUMBER":"007781","UNRESTRICTED_CLAIM_INR":20000000,"HOLDER":"EXAMPLE EDUCATIONAL TRUST","BANK":"SYNTHETIC BANK"}},
+    {"id":"scan-fire","kind":"FIRE_CERTIFICATE","scan":true,"lines":["Building name: BLOCK C","Covered floors: G, 1, 2","Valid up to: 2027-06-30"],"expected":{"BUILDING":"BLOCK C","COVERED_FLOORS":["G","1","2"],"VALID_UNTIL":"2027-06-30"}},
+    {"id":"ambiguous-date","kind":"FIRE_CERTIFICATE","scan":false,"lines":["Expiry date: 02/03/2027"],"expected":{}},
+    {"id":"duplicate-id","kind":"FDR_ADVICE","scan":false,"lines":["FDR No.: 001234","FDR No.: 009876"],"expected":{}}
+  ]
+}

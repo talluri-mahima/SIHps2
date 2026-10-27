@@ -18,7 +18,7 @@ def main():
     args=parser.parse_args()
     reports=ROOT/'reports';reports.mkdir(exist_ok=True)
     if args.gate=='production':
-        report={'gate':'production','status':'BLOCKED','reasons':['OIDC','PostgreSQL RLS/migrations','Malware and isolated rendering/OCR','Policy-approved rule packs','Independent held-out accuracy benchmark','Production recovery/privacy/security acceptance']}
+        report={'gate':'production','status':'BLOCKED','reasons':['OIDC','PostgreSQL RLS deployment verification','Mandatory malware provider and OS-level parser/network isolation','Policy-approved rule packs','Independent held-out accuracy benchmark','Production recovery/privacy/security acceptance']}
         (reports/'production-gate.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
         print('BLOCKED: production requirements remain. See docs/DELIVERY_STATUS.md.')
         return 1
@@ -31,10 +31,13 @@ def main():
         print(name+': '+results[-1]['status'])
         if result.returncode:print((result.stdout+result.stderr)[-5000:])
     files={}
-    for directory in ['app','tests','rulepacks','web/src']:
+    for directory in ['app','tests','rulepacks','web/src','scripts','fixtures','migrations']:
         for p in sorted((ROOT/directory).rglob('*')):
             if p.is_file() and '__pycache__' not in p.parts:
                 files[p.relative_to(ROOT).as_posix()]=hashlib.sha256(p.read_bytes()).hexdigest()
+    for name in ['requirements.lock','requirements-paddle.lock','web/package-lock.json','alembic.ini']:
+        path=ROOT/name
+        if path.is_file():files[name]=hashlib.sha256(path.read_bytes()).hexdigest()
     counts={}
     if (reports/'foundation-tests.xml').exists():
         suites=ET.parse(reports/'foundation-tests.xml').getroot()

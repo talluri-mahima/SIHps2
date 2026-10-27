@@ -10,6 +10,9 @@ TEST_DATA.mkdir(parents=True, exist_ok=True)
 os.environ['AICTE_DATA_DIR'] = str(TEST_DATA)
 os.environ['AICTE_DATABASE_URL'] = f'sqlite:///{TEST_DATA / "test.db"}'
 os.environ['APP_ENV'] = 'development'
+os.environ['AICTE_MALWARE_SCANNER'] = 'none'
+os.environ['AICTE_OCR_PROVIDER'] = 'rapidocr'
+os.environ['AICTE_OCR_FORCE'] = 'false'
 
 from fastapi.testclient import TestClient
 from sqlalchemy import select

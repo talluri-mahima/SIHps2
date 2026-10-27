@@ -1,8 +1,10 @@
-# SIH 26261 · Evidence Workbench
+# SIH 26261 Â· Evidence Workbench
 
 A working development foundation for AICTE application scrutiny. ScopeGuard maps claimed floors to documentary scope; Hestia reconciles exact financial instruments across submitted evidence. Every observation remains human-reviewed and links to its evidence.
 
-**Status: development milestone 0.1, not the completed product MVP.** Synthetic records only. Rules are draft data-consistency checks, not an approved APH interpretation. No live AICTE/bank/issuer connection, production identity, OCR accuracy claim, or automated institutional approval/rejection.
+**Status: local prototype milestone 0.2, not a production release.** The seeded demonstration is synthetic. A separately stored public-document development corpus tests real layouts; it is not an independent accuracy benchmark. Rules remain draft data-consistency checks, not an approved APH interpretation. No live AICTE/bank/issuer connection or automated institutional approval/rejection.
+
+New local capabilities include CPU OCR, derived-page previews, source-linked manual transcription, layout review hints, SQLite migrations, offline PDF signature checks, QR inspection, frozen PDF reports, password sign-in and an honest connection-status screen. [PaddleOCR setup](docs/PADDLE_OCR.md) uses a separate worker environment; [real-document results](docs/REAL_DOCUMENT_EVALUATION.md) record the extraction gaps.
 
 ![ScopeGuard documentary coverage in the working synthetic demonstration](reports/screenshots/infrastructure.png)
 
@@ -33,7 +35,7 @@ macOS/Linux equivalents: use `python3`, `.venv/bin/python`, and `npm`. `requirem
 1. Sign in as **Scrutiny officer**. Open **Evidence** and inspect each original PDF.
 2. Confirm the displayed facts in each of the five documents. Individual Review/Edit actions append fact revisions and preserve raw text.
 3. Run evidence checks. In **Infrastructure**, ground/first-floor occupancy is supported; second-floor occupancy remains unknown. Fire evidence has its own scope.
-4. Open **Financial evidence**. FDR `007781` joins only by exact ID, holder and bank. A ₹2 crore unrestricted DPR claim conflicts with ₹1.8 crore lien evidence; unrestricted residual remains unknown.
+4. Open **Financial evidence**. FDR `007781` joins only by exact ID, holder and bank. A â‚¹2 crore unrestricted DPR claim conflicts with â‚¹1.8 crore lien evidence; unrestricted residual remains unknown.
 5. In **Findings**, confirm one observation with a reason. Export includes only current reviewer-confirmed observations and is labelled a synthetic draft-policy demonstration report.
 6. Switch to applicant, submit replacement evidence. The old original is retained, current findings become stale/pending and exports are blocked until re-evaluation.
 7. Create an **EoA** application as applicant to see a different checklist. Auditor can inspect but cannot change facts/findings or export a new report.
@@ -54,9 +56,9 @@ Do not treat a manual source observation as a live API response. Mock/manual mod
 
 ## Extraction envelope
 
-This milestone does not claim general AI extraction or trained classification. Applicants select the document type. Native PDF lines must use supported labels such as `BUILDING: BLOCK C`, `COVERED_FLOORS: G, 1`, `FDR_NUMBER: 007781`, `PRINCIPAL_INR: 20,000,000`. See `app/extract.py` and `app/seed.py`. Amounts support integer INR; fractions, duplicate critical keys, ambiguous dates and unsupported floor labels are unresolved. Scans are marked `OCR_REQUIRED`; unsupported native layouts require manual extraction rather than fabricated facts. Limit: 10 MB, 30 pages, bounded PDF structure/page dimensions, 30-second parsing budget.
+This milestone does not claim general AI extraction or trained classification. Applicants select the document type; page-level keyword suggestions remain heuristic. Native text and CPU OCR feed conservative labelled-field and unique same-row associations, with source boxes. Scans can use RapidOCR or the explicitly configured PaddleOCR worker. Ambiguous dates, multiple critical candidates, unsupported layouts and uncertain scope require human review. Inline floor mentions are review hints, not certificate coverage. Limit: 10 MB, 30 pages, bounded PDF structure/page dimensions, 300-second document processing deadline. PaddleOCR has a nested 180-second page-worker deadline, so long scans can time out. See [evaluation notes](docs/REAL_DOCUMENT_EVALUATION.md) before citing any accuracy number.
 
-Uploaded originals may contain unsafe input. Active PDF actions/attachments are rejected by the current structure checks, but malware scanning and full OS-level parser isolation remain blocked release gates. Use synthetic files only.
+Active PDF actions/attachments are rejected. Optional Windows Defender scanning runs before parsing when configured, quarantining detections or inconclusive results. Structural checks alone are not antivirus. Full OS-level parser/network isolation and a mandatory production scanner remain open release gates. The local prototype has not passed production security acceptance.
 
 ## Verify
 
@@ -72,7 +74,7 @@ node scripts/browser-smoke.cjs
 
 Browser tests require the app running and a fresh synthetic seed state, because the journey confirms facts and creates an application. To use installed Edge, set `AICTE_BROWSER_PATH` to its executable before running the browser check. Tests isolate their own database under ignored `.data/test-runs/`. Do not point tests at a shared database.
 
-The foundation gate reruns the tests and web build and records source fingerprints in `reports/foundation-gate.json`; it exits nonzero on failure. `--gate production` writes a blocked report and exits nonzero until production requirements exist. Passing development tests does **not** pass G0–G6 or establish extraction accuracy on real documents. See [delivery status](docs/DELIVERY_STATUS.md) and [security boundaries](SECURITY.md).
+The foundation gate reruns the tests and web build and records source fingerprints in `reports/foundation-gate.json`; it exits nonzero on failure. `--gate production` writes a blocked report and exits nonzero until production requirements exist. Passing development tests does **not** pass G0â€“G6 or establish extraction accuracy on real documents. See [delivery status](docs/DELIVERY_STATUS.md) and [security boundaries](SECURITY.md).
 
 ## Storage and configuration
 

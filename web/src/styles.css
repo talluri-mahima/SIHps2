@@ -1844,6 +1844,18 @@ tr:last-child td {
     height: 52px;
     padding: 0 15px;
   }
+  .topbar .breadcrumbs {
+    display: none;
+  }
+  .topbar .top-right {
+    width: 100%;
+    justify-content: space-between;
+    gap: 5px;
+    min-width: 0;
+  }
+  .topbar .top-right button {
+    flex-shrink: 0;
+  }
   .breadcrumbs {
     font-size: 9px;
     gap: 6px;
@@ -2182,6 +2194,81 @@ tr:last-child td {
 .mobile-role {
   display: none;
 }
+.integration-card {
+  padding: 22px;
+}
+.integration-card > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.integration-card h3 {
+  font-size: 13px;
+  flex: 1;
+}
+.integration-card svg {
+  color: #6e9271;
+}
+.integration-card p {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #64765f;
+  margin: 15px 0;
+}
+.integration-card small {
+  font-size: 10px;
+  color: #778b6e;
+}
+.verification-detail {
+  margin-top: 13px;
+  padding-top: 10px;
+  border-top: 1px solid #e1e8d8;
+  font-size: 10px;
+  line-height: 1.8;
+}
+.verification-detail summary {
+  cursor: pointer;
+  color: #506e45;
+}
+.verification-detail p {
+  margin-top: 10px;
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+.signature-fact {
+  padding: 10px;
+  background: #fff;
+  margin-top: 8px;
+  border: 1px solid #e1e8d8;
+  border-radius: 4px;
+}
+.signature-fact span {
+  display: block;
+  font-size: 10px;
+}
+.processing-card small {
+  margin: 7px 0;
+}
+.password-login label {
+  display: block;
+  font-size: 11px;
+  color: #627b55;
+  margin: 14px 0;
+}
+.password-login input {
+  display: block;
+  width: 100%;
+  border: 1px solid #dce5d4;
+  border-radius: 5px;
+  padding: 10px;
+  margin-top: 6px;
+}
+.password-login {
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e5eade;
+  margin-bottom: 15px;
+}
+.rule-trace{margin:12px 0 16px 50px;font-size:11px;line-height:1.8;color:#69825b}.rule-trace summary{cursor:pointer}.rule-trace p{margin:10px 0}.rule-trace a{text-decoration:underline}
 .page-heading p,
 .panel-title p,
 .module-card p,

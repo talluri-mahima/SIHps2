@@ -1,0 +1,3 @@
+# Isolated CPU worker; avoids altering the web application's dependencies.
+paddlepaddle==3.3.1
+paddleocr==3.7.0

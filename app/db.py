@@ -15,5 +15,10 @@ if DATABASE_URL.startswith('sqlite'):
 
 
 def initialize():
-    # Development schema bootstrap only. Production migrations are a blocked gate.
-    Base.metadata.create_all(engine)
+    from alembic.config import Config
+    from alembic import command
+    from .config import ROOT
+    cfg=Config(str(ROOT/'alembic.ini'))
+    with engine.begin() as connection:
+        cfg.attributes['connection']=connection
+        command.upgrade(cfg,'head')

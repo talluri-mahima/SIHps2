@@ -1,0 +1,281 @@
+{
+  "dataset": "synthetic-development-document-check-v1",
+  "split": "DEVELOPMENT_NOT_HELD_OUT",
+  "independent_labels": false,
+  "machine": {
+    "platform": "Windows",
+    "processor": "Intel64 Family 6 Model 126 Stepping 5, GenuineIntel",
+    "python": "3.13.7"
+  },
+  "notice": "Engineering fixtures only. Not a real-document accuracy benchmark or independent validation.",
+  "summary": {
+    "correct_fields": 21,
+    "expected_fields": 21,
+    "wrong_fields": 0,
+    "unexpected_fields": 0,
+    "missing_or_abstained": 0
+  },
+  "cases": [
+    {
+      "id": "native-occupancy-alternative",
+      "scan": false,
+      "sha256": "d3b915053d6e48f3778d27331247fcbca57c5d6cfacf6a2ce5c1a8223be7e559",
+      "correct_fields": 3,
+      "expected_fields": 3,
+      "wrong_fields": 0,
+      "unexpected_fields": 0,
+      "missing_or_abstained": 0,
+      "elapsed_seconds": 0.027,
+      "actual": {
+        "BUILDING": "BLOCK C",
+        "COVERED_FLOORS": [
+          "G",
+          "1"
+        ],
+        "VALID_UNTIL": "2027-06-30"
+      },
+      "expected": {
+        "BUILDING": "BLOCK C",
+        "COVERED_FLOORS": [
+          "G",
+          "1"
+        ],
+        "VALID_UNTIL": "2027-06-30"
+      },
+      "all_critical_fields_require_confirmation": true,
+      "metrics": {
+        "elapsed_seconds": 0.027,
+        "ocr_pages": 0,
+        "low_recognition_lines_omitted": 0,
+        "candidate_fields": 3,
+        "low_recognition_candidates": 0,
+        "automatic_accepted_critical_fields": 0,
+        "duplicate_keys_omitted": []
+      }
+    },
+    {
+      "id": "scan-occupancy",
+      "scan": true,
+      "sha256": "92c6b6f31a3bdc37eb139a7987e855a5c5053225ab52b69197ab0972621cfa6c",
+      "correct_fields": 3,
+      "expected_fields": 3,
+      "wrong_fields": 0,
+      "unexpected_fields": 0,
+      "missing_or_abstained": 0,
+      "elapsed_seconds": 2.678,
+      "actual": {
+        "BUILDING": "BLOCK C",
+        "COVERED_FLOORS": [
+          "G",
+          "1"
+        ],
+        "VALID_UNTIL": "2027-06-30"
+      },
+      "expected": {
+        "BUILDING": "BLOCK C",
+        "COVERED_FLOORS": [
+          "G",
+          "1"
+        ],
+        "VALID_UNTIL": "2027-06-30"
+      },
+      "all_critical_fields_require_confirmation": true,
+      "metrics": {
+        "elapsed_seconds": 2.67,
+        "ocr_pages": 1,
+        "low_recognition_lines_omitted": 0,
+        "candidate_fields": 3,
+        "low_recognition_candidates": 2,
+        "automatic_accepted_critical_fields": 0,
+        "duplicate_keys_omitted": []
+      }
+    },
+    {
+      "id": "native-fdr-crores",
+      "scan": false,
+      "sha256": "bf26f47116d0b0d1b0fe73d4bad5f44a2b53ce30edda32e9c0b43cb7cf8d4a3d",
+      "correct_fields": 5,
+      "expected_fields": 5,
+      "wrong_fields": 0,
+      "unexpected_fields": 0,
+      "missing_or_abstained": 0,
+      "elapsed_seconds": 0.014,
+      "actual": {
+        "FDR_NUMBER": "007781",
+        "PRINCIPAL_INR": 20000000,
+        "LIEN_INR": 18000000,
+        "HOLDER": "EXAMPLE EDUCATIONAL TRUST",
+        "BANK": "SYNTHETIC BANK"
+      },
+      "expected": {
+        "FDR_NUMBER": "007781",
+        "PRINCIPAL_INR": 20000000,
+        "LIEN_INR": 18000000,
+        "HOLDER": "EXAMPLE EDUCATIONAL TRUST",
+        "BANK": "SYNTHETIC BANK"
+      },
+      "all_critical_fields_require_confirmation": true,
+      "metrics": {
+        "elapsed_seconds": 0.014,
+        "ocr_pages": 0,
+        "low_recognition_lines_omitted": 0,
+        "candidate_fields": 5,
+        "low_recognition_candidates": 0,
+        "automatic_accepted_critical_fields": 0,
+        "duplicate_keys_omitted": []
+      }
+    },
+    {
+      "id": "scan-fdr",
+      "scan": true,
+      "sha256": "e9fd25776f37f0dbed0be6e0cd53f857979269ebf3edec3bd3703e9e7fdf5c78",
+      "correct_fields": 3,
+      "expected_fields": 3,
+      "wrong_fields": 0,
+      "unexpected_fields": 0,
+      "missing_or_abstained": 0,
+      "elapsed_seconds": 2.399,
+      "actual": {
+        "FDR_NUMBER": "007781",
+        "PRINCIPAL_INR": 20000000,
+        "LIEN_INR": 18000000
+      },
+      "expected": {
+        "FDR_NUMBER": "007781",
+        "PRINCIPAL_INR": 20000000,
+        "LIEN_INR": 18000000
+      },
+      "all_critical_fields_require_confirmation": true,
+      "metrics": {
+        "elapsed_seconds": 2.389,
+        "ocr_pages": 1,
+        "low_recognition_lines_omitted": 0,
+        "candidate_fields": 3,
+        "low_recognition_candidates": 2,
+        "automatic_accepted_critical_fields": 0,
+        "duplicate_keys_omitted": []
+      }
+    },
+    {
+      "id": "native-dpr",
+      "scan": false,
+      "sha256": "2687a15938955cbc5e6b49a770462cade37bdfa1c45ae3ef3163cb5dde17da76",
+      "correct_fields": 4,
+      "expected_fields": 4,
+      "wrong_fields": 0,
+      "unexpected_fields": 0,
+      "missing_or_abstained": 0,
+      "elapsed_seconds": 0.024,
+      "actual": {
+        "FDR_NUMBER": "007781",
+        "UNRESTRICTED_CLAIM_INR": 20000000,
+        "HOLDER": "EXAMPLE EDUCATIONAL TRUST",
+        "BANK": "SYNTHETIC BANK"
+      },
+      "expected": {
+        "FDR_NUMBER": "007781",
+        "UNRESTRICTED_CLAIM_INR": 20000000,
+        "HOLDER": "EXAMPLE EDUCATIONAL TRUST",
+        "BANK": "SYNTHETIC BANK"
+      },
+      "all_critical_fields_require_confirmation": true,
+      "metrics": {
+        "elapsed_seconds": 0.024,
+        "ocr_pages": 0,
+        "low_recognition_lines_omitted": 0,
+        "candidate_fields": 4,
+        "low_recognition_candidates": 0,
+        "automatic_accepted_critical_fields": 0,
+        "duplicate_keys_omitted": []
+      }
+    },
+    {
+      "id": "scan-fire",
+      "scan": true,
+      "sha256": "acea7a8365f18c9eba16f1c464e8b138a6f59b9dce18191b8bb7b4c329d50054",
+      "correct_fields": 3,
+      "expected_fields": 3,
+      "wrong_fields": 0,
+      "unexpected_fields": 0,
+      "missing_or_abstained": 0,
+      "elapsed_seconds": 2.703,
+      "actual": {
+        "BUILDING": "BLOCK C",
+        "COVERED_FLOORS": [
+          "G",
+          "1",
+          "2"
+        ],
+        "VALID_UNTIL": "2027-06-30"
+      },
+      "expected": {
+        "BUILDING": "BLOCK C",
+        "COVERED_FLOORS": [
+          "G",
+          "1",
+          "2"
+        ],
+        "VALID_UNTIL": "2027-06-30"
+      },
+      "all_critical_fields_require_confirmation": true,
+      "metrics": {
+        "elapsed_seconds": 2.689,
+        "ocr_pages": 1,
+        "low_recognition_lines_omitted": 0,
+        "candidate_fields": 3,
+        "low_recognition_candidates": 3,
+        "automatic_accepted_critical_fields": 0,
+        "duplicate_keys_omitted": []
+      }
+    },
+    {
+      "id": "ambiguous-date",
+      "scan": false,
+      "sha256": "0bcdcbce3afc2f6fc716d5a926645002b44c092b8b19dd890324b66f5baf03ea",
+      "correct_fields": 0,
+      "expected_fields": 0,
+      "wrong_fields": 0,
+      "unexpected_fields": 0,
+      "missing_or_abstained": 0,
+      "elapsed_seconds": 0.026,
+      "actual": {},
+      "expected": {},
+      "all_critical_fields_require_confirmation": true,
+      "metrics": {
+        "elapsed_seconds": 0.026,
+        "ocr_pages": 0,
+        "low_recognition_lines_omitted": 0,
+        "candidate_fields": 0,
+        "low_recognition_candidates": 0,
+        "automatic_accepted_critical_fields": 0,
+        "duplicate_keys_omitted": []
+      }
+    },
+    {
+      "id": "duplicate-id",
+      "scan": false,
+      "sha256": "85de8a30c75b5ccd9b59cf0229a1e5cf8b9fb75ca6a63d9cd52721cff1c8a6a5",
+      "correct_fields": 0,
+      "expected_fields": 0,
+      "wrong_fields": 0,
+      "unexpected_fields": 0,
+      "missing_or_abstained": 0,
+      "elapsed_seconds": 0.032,
+      "actual": {},
+      "expected": {},
+      "all_critical_fields_require_confirmation": true,
+      "metrics": {
+        "elapsed_seconds": 0.032,
+        "ocr_pages": 0,
+        "low_recognition_lines_omitted": 0,
+        "candidate_fields": 0,
+        "low_recognition_candidates": 0,
+        "automatic_accepted_critical_fields": 0,
+        "duplicate_keys_omitted": [
+          "FDR_NUMBER"
+        ]
+      }
+    }
+  ],
+  "real_world_accuracy_established": false
+}

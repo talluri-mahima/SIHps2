@@ -1,0 +1,13 @@
+{
+  "id": "evidence-consistency-demo",
+  "version": "0.1.0",
+  "status": "DRAFT",
+  "policy_review": "PENDING",
+  "description": "Data-consistency checks only. No approved regulatory thresholds or AICTE approval decisions.",
+  "rules": [
+    {"id": "DOC-COMPLETE-001", "title": "Expected demonstration evidence", "basis": "Demo workflow checklist; not a certified APH requirement"},
+    {"id": "INFRA-SCOPE-001", "title": "Claimed floors versus occupancy coverage", "basis": "Submitted documentary scope comparison; policy review pending"},
+    {"id": "FIN-LIEN-001", "title": "Unrestricted funding claim versus lien evidence", "basis": "Exact-instrument cross-document consistency; not a prescribed funds threshold"},
+    {"id": "DOC-EXPIRY-001", "title": "Explicit expiry date", "basis": "Document date compared with selected evaluation date; inclusive validity"}
+  ]
+}

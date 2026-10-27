@@ -1,0 +1,48 @@
+{
+  "status": "PASS",
+  "at": "2026-10-27T10:00:10.241Z",
+  "base": "http://127.0.0.1:8765",
+  "checks": [
+    {
+      "name": "officer opens assigned application",
+      "status": "PASS"
+    },
+    {
+      "name": "five original PDF pages render and facts confirm",
+      "status": "PASS"
+    },
+    {
+      "name": "second-floor occupancy remains unknown while fire scope is supported",
+      "status": "PASS"
+    },
+    {
+      "name": "lien reconciliation preserves unknown residual",
+      "status": "PASS"
+    },
+    {
+      "name": "reviewer confirmation is persisted",
+      "status": "PASS"
+    },
+    {
+      "name": "download contains exactly the confirmed observation and draft-policy label",
+      "status": "PASS"
+    },
+    {
+      "name": "audit integrity verified in the interface",
+      "status": "PASS"
+    },
+    {
+      "name": "applicant creates EoA application with its distinct checklist",
+      "status": "PASS"
+    },
+    {
+      "name": "mobile overview has no horizontal page overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "no uncaught browser errors",
+      "status": "PASS"
+    }
+  ],
+  "errors": []
+}

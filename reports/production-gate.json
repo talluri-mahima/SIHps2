@@ -1,0 +1,12 @@
+{
+  "gate": "production",
+  "status": "BLOCKED",
+  "reasons": [
+    "OIDC",
+    "PostgreSQL RLS/migrations",
+    "Malware and isolated rendering/OCR",
+    "Policy-approved rule packs",
+    "Independent held-out accuracy benchmark",
+    "Production recovery/privacy/security acceptance"
+  ]
+}

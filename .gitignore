@@ -1,0 +1,11 @@
+.venv/
+.data/
+__pycache__/
+.pytest_cache/
+node_modules/
+dist/
+.env
+reports/*.tmp
+reports/*.xml
+reports/browser-failure.png
+web/test-results/

@@ -1,0 +1,45 @@
+{
+  "gate": "foundation",
+  "status": "PASS",
+  "at": "2026-10-27T10:01:51.824246+00:00",
+  "checks": [
+    {
+      "name": "backend_tests",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "name": "web_build",
+      "status": "PASS",
+      "exit_code": 0
+    }
+  ],
+  "test_counts": {
+    "tests": 48,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "source_sha256": {
+    "app/__init__.py": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+    "app/config.py": "62a41e6b74f284c6bb3c50de0131a006f568b6793e722ab7217f1ca0e20b530b",
+    "app/db.py": "bc328e685418a2140d7db695c58f51499840fd3bc693a83a13cb50c02b11a77d",
+    "app/extract.py": "deb8490eed55dd8974a532218757958ad0480c717d2dbd51ab3c8920bbeede85",
+    "app/main.py": "284f3a6945b36685c24d4c9fd3e928d139b859ba3fefd9d7b26338e3a8ee9b5d",
+    "app/models.py": "ba306ae00b57c156d4fbcb6003a6807ac2100e7e96e1f0bea064735898fc366f",
+    "app/rules.py": "ec1ed0f7a28ca2909c2d6f041f69f67045e9b2ba763846b2298fe0f30a0a560f",
+    "app/seed.py": "163a13158a64a0426385f65b6348dc971a3d4178ef2e0d3bb35222171d7308d4",
+    "app/service.py": "350e99f7095c0c2da917140c2537efec2d17be067e04e0740136c6359bb89c61",
+    "tests/conftest.py": "872d45b44824ec27ecd3d0d04a51c5d2cada6ecd065912c0e7ef982973cc9cfa",
+    "tests/test_api.py": "de20c293f0e971c99ce92e086722d2b5a118742068310cfa1ea1a50ee81bb00c",
+    "tests/test_extraction.py": "af5d07517695e6c528fa7ec120067a9541d4f6480432fd372347ea414afdac25",
+    "tests/test_rules.py": "431191bbc0ed15e5f125c95ca503c978667dc4ebbce496331cbefd1ac14f9480",
+    "rulepacks/demo-2026-27.json": "00ef2dd45accf0d0e575c196be3e6b0a00b7dbf26a56de67bb79f3e8b5e66d30",
+    "web/src/main.tsx": "0ae01c18b9086cf13efee0e825854930fd48441291c1f12a343e4f0c167003ef",
+    "web/src/styles.css": "e51317bed4c0c6700c536c80fd29d02f2347cec71331d25d802189aeda054cd2"
+  },
+  "source_fingerprint": "7cd8605b039283b94fe1a403d0bedf853ef19e3ebb1eda392f856afd7233d6e9",
+  "production_ready": false,
+  "accuracy_benchmark_run": false,
+  "notice": "Foundation behavior checks only; planned product release gates remain open."
+}

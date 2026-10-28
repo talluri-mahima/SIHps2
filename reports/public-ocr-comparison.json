@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "document_id": "e44f47fb-ba74-41ad-ab20-057f79720a5d",
+  "source_sha256": "9a4501ecca10c68957d445853fa27ef8e052ecf0281a89d94e6fa7766eb7cbc0",
+  "page": 1,
+  "elapsed_seconds": 28.559,
+  "provider": "CPU_OCR_PADDLEOCR",
+  "expected_name_present": true,
+  "accepted_facts_unchanged": true,
+  "all_critical_facts_unconfirmed": true,
+  "independent_accuracy_established": false,
+  "notice": "One development page and one visually checked phrase. Not a representative OCR accuracy claim."
+}

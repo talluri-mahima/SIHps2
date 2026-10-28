@@ -12,7 +12,10 @@ def associated_lines(lines):
     """Join exact known labels to a unique nearby value; ambiguous rows abstain."""
     result = []
     for label in lines:
-        if canonical_label(label['text'].strip().rstrip(':=')) not in LABELS:
+        name=canonical_label(label['text'].strip().rstrip(':='))
+        if name not in LABELS:
+            continue
+        if sum(canonical_label(item['text'].strip().rstrip(':='))==name for item in lines)>1:
             continue
         box = label['bbox']; center = (box[1]+box[3])/2
         candidates = [item for item in lines if item is not label

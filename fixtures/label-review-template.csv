@@ -1,0 +1,13 @@
+dataset,case_id,field_key,expected_value,page,reviewer,reviewed_at_ist,decision,corrected_value,reason
+public-layout-preliminary-v1,tsm-occupancy,BUILDING,MAIN BUILDING,2,,,PENDING,,
+public-layout-preliminary-v1,tsm-occupancy,COVERED_FLOORS,"G;1",2,,,PENDING,,
+public-layout-preliminary-v1,tsm-fire,ISSUING_AUTHORITY,TAMILNADU FIRE & RESCUE SERVICE,1,,,PENDING,,
+public-layout-preliminary-v1,tsm-fire,INSTITUTION_NAME,THIAGARAJAR SCHOOL OF MANAGEMENT,1,,,PENDING,,
+public-layout-preliminary-v1,bit-sindri-eoa-2026,ACADEMIC_YEAR,2026-27,1,,,PENDING,,
+public-layout-preliminary-v1,bit-sindri-eoa-2026,ISSUED_ON,2026-04-20,1,,,PENDING,,
+public-layout-preliminary-v1,bit-sindri-eoa-2026,APPROVAL_REFERENCE,EASTERN/1-46221981547/2026/EOA,1,,,PENDING,,
+public-layout-preliminary-v1,bit-sindri-eoa-2026,ISSUING_AUTHORITY,ALL INDIA COUNCIL FOR TECHNICAL EDUCATION,1,,,PENDING,,
+public-layout-preliminary-v1,bcrec-eoa-holdout,ACADEMIC_YEAR,2026-27,1,,,PENDING,,
+public-layout-preliminary-v1,bcrec-eoa-holdout,ISSUED_ON,2026-04-22,1,,,PENDING,,
+public-layout-preliminary-v1,bcrec-eoa-holdout,APPROVAL_REFERENCE,EASTERN/1-46271582145/2026/EOA,1,,,PENDING,,
+public-layout-preliminary-v1,bcrec-eoa-holdout,ISSUING_AUTHORITY,ALL INDIA COUNCIL FOR TECHNICAL EDUCATION,1,,,PENDING,,

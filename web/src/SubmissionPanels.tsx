@@ -110,9 +110,13 @@ export type Verification = {
     notice?: string;
     note?: string;
     decoded_references?: { text: string; status: string }[];
+    lines?:{text:string;bbox:number[];score:number|null}[];
+    page?:number;
   };
 };
 type ProcessInfo = {
+  document_annotations?: {page:number;kind:string;status:string;reason:string}[];
+  page_classifications?: {page:number;kind:string;basis:string}[];
   layout_observations?: {kind:string;page:number;raw:string;meaning:string;suggested_value?:string[]}[];
   metrics: {
     elapsed_seconds: number;
@@ -138,11 +142,45 @@ const keys = [
   "LIEN_INR",
   "UNRESTRICTED_CLAIM_INR",
   "VALID_UNTIL",
+  "INSTITUTION_NAME", "ISSUING_AUTHORITY", "ISSUED_ON", "APPROVAL_REFERENCE", "ACADEMIC_YEAR", "PERMANENT_ID",
 ];
 const label = (s: string) => s.replaceAll("_", " ").toLowerCase();
 
+type HistoryFinding={id:string;title:string;state:string;version:number;rule_id:string;evidence:{document_id:string;field_id:string}[]};
+type HistoryEvaluation={id:string;at:string;stale:boolean;findings:HistoryFinding[]};
+type HistoryDocument={id:string;kind:string;version:number;source_status:string;source_mode:string;fields:{confirmed_by:string|null}[]};
+export function RectificationPanel({applicationId,revision,evaluationId,stale,documents,role,busy,run,refresh,onEvidence}:{
+  applicationId:string;revision:number;evaluationId?:string;stale:boolean;documents:HistoryDocument[];role:string;busy:boolean;
+  run:(fn:()=>Promise<void>,message?:string)=>Promise<void>;refresh:()=>Promise<void>;onEvidence:(documentId:string,factId?:string)=>void;
+}){
+  const [history,setHistory]=useState<HistoryEvaluation[]>([]),[events,setEvents]=useState<{action:string;at:string;detail:{finding_id?:string;reason?:string;supporting_documents?:string[];source_modes?:Record<string,string>}}[]>([]),[error,setError]=useState("");
+  const [selected,setSelected]=useState<HistoryFinding|null>(null),[support,setSupport]=useState<string[]>([]),[reason,setReason]=useState("");
+  async function load(){try{const [h,a]=await Promise.all([request<HistoryEvaluation[]>(`/applications/${applicationId}/evaluations`),request<{events:typeof events}>(`/applications/${applicationId}/audit`)]);setHistory(h);setEvents(a.events);setError("");}catch(e){setError((e as Error).message)}}
+  useEffect(()=>{setSelected(null);void load()},[applicationId,revision,evaluationId]);
+  const previous=history.filter(e=>e.id!==evaluationId);
+  const relevant=events.filter(e=>e.detail.finding_id && e.detail.reason);
+  if(!history.length && !error)return null;
+  return <section className="panel rectification-panel">
+    <div className="panel-title"><div><span className="tiny-label">CONTINUITY OF REVIEW</span><h2>Clarification & rectification</h2><p>Requests, applicant responses and replacement evidence stay connected.</p></div><span className="badge">{previous.length} prior evaluations</span></div>
+    {error&&<div className="alert error">{error}</div>}
+    <details className="review-history" open={previous.some(e=>e.findings.some(f=>['VERIFICATION_PENDING','RESPONSE_RECEIVED','REVIEWER_CONFIRMED'].includes(f.state)))}>
+      <summary>Inspect review history and outstanding clarifications</summary>
+      {!relevant.length&&<p className="muted">No clarification or resolution has been recorded yet. Use “Request specific clarification” on an observation.</p>}
+      {relevant.slice(-10).reverse().map((event,index)=><div className="review-event" key={index}><span className="badge">{label(event.action)}</span><p>{event.detail.reason}</p><small>{new Date(event.at).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})} IST</small>{event.detail.source_modes&&<small>Evidence source modes: {Object.values(event.detail.source_modes).join(', ')}. A mock observation is a demonstration, not issuer verification.</small>}</div>)}
+      {previous.map(ev=><div className="historical-evaluation" key={ev.id}><small>Evaluation {ev.id.slice(0,8)} · {new Date(ev.at).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})} IST</small>{ev.findings.map(f=><article className="historical-finding" key={f.id}><div><strong>{f.title}</strong><small>{f.rule_id}</small></div><span className={'badge '+(f.state==='RESOLVED'?'mint':'amber')}>{label(f.state)}</span>{role==='OFFICER'&&['VERIFICATION_PENDING','RESPONSE_RECEIVED','REVIEWER_CONFIRMED'].includes(f.state)&&<button className="secondary" disabled={busy||stale} onClick={()=>{setSelected(f);setSupport([]);setReason("")}}>Review rectification</button>}{f.evidence.slice(0,1).map(e=><button className="text-button" key={e.field_id} onClick={()=>onEvidence(e.document_id,e.field_id)}>Inspect linked evidence</button>)}</article>)}</div>)}
+      {stale&&<p className="alert warning">Run checks on the current evidence before resolving an earlier observation.</p>}
+    </details>
+    {selected&&<form className="rectification-form" onSubmit={event=>{event.preventDefault();void run(async()=>{await request(`/findings/${selected.id}/resolve-after-review`,{method:'POST',headers:{'If-Match':String(selected.version)},body:JSON.stringify({evaluation_id:evaluationId,supporting_document_ids:support,reason})});setSelected(null);await refresh();await load()},'Rectification linked to the current evaluation and evidence.')}}>
+      <h3>Resolve: {selected.title}</h3><p>Select the current evidence that addresses this specific gap. Its facts must be confirmed and its source observation explicitly recorded.</p>
+      <fieldset><legend>Supporting current documents</legend>{documents.map(doc=><label className="support-choice" key={doc.id}><input type="checkbox" checked={support.includes(doc.id)} onChange={e=>setSupport(old=>e.target.checked?[...old,doc.id]:old.filter(id=>id!==doc.id))}/><span>{label(doc.kind)} · version {doc.version}<small>{doc.fields.every(f=>f.confirmed_by)&&doc.fields.length?'Facts confirmed':'Facts need review'} · {label(doc.source_status)} · mode {doc.source_mode}</small></span></label>)}</fieldset>
+      <label>Officer resolution reason<textarea required minLength={10} maxLength={1000} value={reason} onChange={e=>setReason(e.target.value)} placeholder="Explain how the linked evidence addresses the original gap."/></label><div className="heading-actions"><button type="button" className="secondary" onClick={()=>setSelected(null)}>Cancel</button><button className="primary" disabled={busy||!support.length||stale}>Record reviewed resolution</button></div>
+    </form>}
+  </section>
+}
+
 export function ProcessingTools({
   docId,
+  currentPage=1,
   processing,
   events,
   officer,
@@ -151,6 +189,7 @@ export function ProcessingTools({
   refresh,
 }: {
   docId: string;
+  currentPage?:number;
   processing?: ProcessInfo | null;
   events?: Verification[];
   officer: boolean;
@@ -228,6 +267,13 @@ export function ProcessingTools({
                 <small>{hint.meaning}</small>
               </details>
             ))}
+            {(processing.document_annotations || []).map((annotation,index)=>(
+              <div className="alert warning" key={index}>Page {annotation.page}: {annotation.reason}</div>
+            ))}
+            {(processing.page_classifications || []).length>0 && <details className="verification-detail">
+              <summary>Inspect page-level document suggestions</summary>
+              {processing.page_classifications!.map((item,index)=><small key={index}>Page {item.page}: {label(item.kind)} · heuristic, officer review required</small>)}
+            </details>}
           </>
         ) : (
           <small>Processing result is being generated.</small>
@@ -242,6 +288,8 @@ export function ProcessingTools({
             Add a missing evidence fact
           </button>
         )}
+        {officer&&<button className="text-button" disabled={busy} onClick={()=>void run(async()=>{await request(`/documents/${docId}/ocr-comparisons`,{method:'POST',body:JSON.stringify({page:currentPage})});await refresh()},'Alternative OCR recorded. Compare the text and explicitly review any correction.')}><RefreshCw size={13}/>Re-read page {currentPage} with local OCR</button>}
+        {(events||[]).filter(e=>e.type==='OCR_COMPARISON').slice(0,1).map(event=><details className="verification-detail" key={event.id} open><summary>Alternative OCR · page {event.payload.page} · review required</summary><p>{event.payload.notice}</p><div className="ocr-transcript">{event.payload.lines?.map((line,index)=><p key={index}>{line.text}<small>{line.score!==null?`Recognition score ${Math.round(line.score*100)}% · not authenticity confidence`:''}</small></p>)}</div></details>)}
       </div>
       <div className="source-card">
         <span className="tiny-label">LOCAL DOCUMENT VERIFICATION</span>

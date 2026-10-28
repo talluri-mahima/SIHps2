@@ -155,7 +155,7 @@ const base = process.env.AICTE_TEST_URL || "http://127.0.0.1:8765";
       .click();
     await page.getByRole("dialog").waitFor({ state: "detached" });
     await page.getByRole("button", { name: "Overview", exact: true }).click();
-    await page.getByText("Prior Eoa", { exact: true }).waitFor();
+    await page.getByText("Prior EoA letter", { exact: true }).waitFor();
     record("applicant creates EoA application with its distinct checklist");
     await page.setViewportSize({ width: 390, height: 844 });
     assert(

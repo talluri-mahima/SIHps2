@@ -16,7 +16,7 @@ def report_pdf(report, report_hash):
 
     def paragraph(text,bold=False):
         nonlocal y
-        safe=str(text).encode('ascii','replace').decode()
+        safe=str(text).replace('\u2014',' - ').replace('\u2013','-').replace('\u20b9','INR ').encode('ascii','replace').decode()
         for line in textwrap.wrap(safe,width=85 if bold else 98) or ['']:
             if page is None or y>760:new_page()
             page.insert_text((40,y),line,fontsize=12 if bold else 10,fontname='hebo' if bold else 'helv')
@@ -44,6 +44,15 @@ def report_pdf(report, report_hash):
         for evidence in f['evidence']:
             paragraph(f'Evidence document {evidence["document_id"]}, page {evidence["page"]}, fact {evidence["field_id"]}.')
         if not f['evidence']:paragraph('Evidence gap: '+f['reason']+'. Missing/unconfirmed evidence is explicitly identified.')
+    history=report.get('rectification_history',[])
+    if history:paragraph('Reviewed rectification history',True)
+    for entry in history:
+        paragraph('Earlier finding: '+entry['finding_id'])
+        paragraph('Resolution reason: '+entry['reason'])
+        paragraph('New evaluation: '+entry['evaluation_id'])
+        paragraph('Source modes: '+', '.join(sorted(set(entry['source_modes'].values()))))
+        paragraph('Recorded: '+entry['at']+' | Reviewer: '+entry['reviewer'])
+    for limitation in report.get('limitations',[]):paragraph('Limit: '+limitation)
     data=pdf.tobytes()
     pdf.close()
     return data

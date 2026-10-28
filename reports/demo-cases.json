@@ -1,0 +1,18 @@
+{
+  "notice": "Local demonstration cases. No real application or issuer authentication is implied. Synthetic automatic review actions are explicitly labelled in their audit reasons.",
+  "cases": [
+    {
+      "application_id": "f3c15c29-c058-4cba-8f9f-ee2b79df86a8",
+      "name": "Public TSM documents \u2014 review only, issuer unverified",
+      "type": "PUBLIC_DOCUMENT_REVIEW",
+      "critical_facts": "UNCONFIRMED",
+      "issuer": "NOT_VERIFIED"
+    },
+    {
+      "application_id": "ac76edcb-9fdd-414a-a073-de5ea758d32a",
+      "name": "ScopeGuard \u2014 completed SYNTHETIC rectification",
+      "type": "SYNTHETIC_END_TO_END",
+      "source_mode": "MOCK"
+    }
+  ]
+}

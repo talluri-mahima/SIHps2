@@ -6,8 +6,12 @@
       "sha256": "ce8b6086f63c817c2b7252f030aca0c70c8c4351ef5e69cbecaa14dafe0fd955",
       "pages": 4,
       "native_text_pages": 4,
-      "status": "MANUAL_EXTRACTION_REQUIRED",
-      "candidate_keys": [],
+      "status": "EXTRACTED",
+      "candidate_keys": [
+        "BUILDING",
+        "COVERED_FLOORS",
+        "APPROVAL_REFERENCE"
+      ],
       "layout_observation_counts": {
         "FLOOR_NOTATION_MENTION": 1
       },
@@ -22,12 +26,13 @@
         }
       ],
       "metrics": {
-        "elapsed_seconds": 0.081,
+        "elapsed_seconds": 0.068,
         "ocr_pages": 0,
         "ocr_provider": "rapidocr",
         "forced_ocr": false,
+        "repeated_agreeing_candidates": 0,
         "low_recognition_lines_omitted": 0,
-        "candidate_fields": 0,
+        "candidate_fields": 3,
         "low_recognition_candidates": 0,
         "automatic_accepted_critical_fields": 0,
         "duplicate_keys_omitted": []
@@ -41,8 +46,11 @@
       "sha256": "9a4501ecca10c68957d445853fa27ef8e052ecf0281a89d94e6fa7766eb7cbc0",
       "pages": 1,
       "native_text_pages": 1,
-      "status": "MANUAL_EXTRACTION_REQUIRED",
-      "candidate_keys": [],
+      "status": "EXTRACTED",
+      "candidate_keys": [
+        "ISSUING_AUTHORITY",
+        "INSTITUTION_NAME"
+      ],
       "layout_observation_counts": {
         "EXPIRY_LABEL_MENTION": 1,
         "FLOOR_NOTATION_MENTION": 1
@@ -58,12 +66,13 @@
         }
       ],
       "metrics": {
-        "elapsed_seconds": 0.015,
+        "elapsed_seconds": 0.013,
         "ocr_pages": 0,
         "ocr_provider": "rapidocr",
         "forced_ocr": false,
+        "repeated_agreeing_candidates": 0,
         "low_recognition_lines_omitted": 0,
-        "candidate_fields": 0,
+        "candidate_fields": 2,
         "low_recognition_candidates": 0,
         "automatic_accepted_critical_fields": 0,
         "duplicate_keys_omitted": []
@@ -93,10 +102,11 @@
         }
       ],
       "metrics": {
-        "elapsed_seconds": 0.519,
+        "elapsed_seconds": 0.42,
         "ocr_pages": 0,
         "ocr_provider": "rapidocr",
         "forced_ocr": false,
+        "repeated_agreeing_candidates": 0,
         "low_recognition_lines_omitted": 0,
         "candidate_fields": 0,
         "low_recognition_candidates": 0,
@@ -112,8 +122,15 @@
       "sha256": "a37a6618fe15b16c5fd165e564a86bcf0f27a7397d8eb903949033a60519f7a9",
       "pages": 6,
       "native_text_pages": 6,
-      "status": "MANUAL_EXTRACTION_REQUIRED",
-      "candidate_keys": [],
+      "status": "EXTRACTED",
+      "candidate_keys": [
+        "ISSUING_AUTHORITY",
+        "ACADEMIC_YEAR",
+        "APPROVAL_REFERENCE",
+        "ISSUED_ON",
+        "PERMANENT_ID",
+        "INSTITUTION_NAME"
+      ],
       "layout_observation_counts": {},
       "page_classifications": [
         {
@@ -134,12 +151,13 @@
         }
       ],
       "metrics": {
-        "elapsed_seconds": 0.098,
+        "elapsed_seconds": 0.086,
         "ocr_pages": 0,
         "ocr_provider": "rapidocr",
         "forced_ocr": false,
+        "repeated_agreeing_candidates": 7,
         "low_recognition_lines_omitted": 0,
-        "candidate_fields": 0,
+        "candidate_fields": 6,
         "low_recognition_candidates": 0,
         "automatic_accepted_critical_fields": 0,
         "duplicate_keys_omitted": []

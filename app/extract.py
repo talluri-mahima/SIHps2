@@ -15,9 +15,11 @@ import pymupdf as fitz
 from .candidates import labelled_candidate, classify
 from .ocr import LocalOCR
 from .layout import associated_lines, observations
+from .document_understanding import understand
 
 ALLOWED = {'BUILDING', 'CLAIMED_FLOORS', 'COVERED_FLOORS', 'FDR_NUMBER', 'HOLDER', 'BANK',
            'PRINCIPAL_INR', 'LIEN_INR', 'UNRESTRICTED_CLAIM_INR', 'VALID_UNTIL'}
+ALLOWED.update({'INSTITUTION_NAME','ISSUING_AUTHORITY','ISSUED_ON','APPROVAL_REFERENCE','ACADEMIC_YEAR','PERMANENT_ID'})
 
 
 def normalize(key, raw):
@@ -32,8 +34,10 @@ def normalize(key, raw):
         if not floors or len(set(floors)) != len(floors) or any(not re.fullmatch(r'G|B[1-3]|[1-9][0-9]?', f) for f in floors):
             raise ValueError('Ambiguous floor list')
         return floors
-    if key == 'VALID_UNTIL':
+    if key in {'VALID_UNTIL','ISSUED_ON'}:
         return date.fromisoformat(raw).isoformat()
+    if key == 'ACADEMIC_YEAR' and not re.fullmatch(r'20\d{2}-(?:\d{2}|20\d{2})',raw):
+        raise ValueError('Ambiguous academic year')
     if key == 'FDR_NUMBER':
         if not re.fullmatch(r'[A-Za-z0-9 -]{1,64}', raw):
             raise ValueError('Ambiguous identifier')
@@ -65,7 +69,7 @@ def extract(path, output_dir=None, use_ocr=None):
         fields = []
         readable_pages = 0
         page_results, all_lines, low_confidence = [], [], 0
-        layout_hints, page_classifications = [], []
+        layout_hints, page_classifications, document_annotations = [], [], []
         ocr_engine = None
         for page_no, page in enumerate(doc, 1):
             if page.rect.width > 4000 or page.rect.height > 4000:
@@ -111,6 +115,17 @@ def extract(path, output_dir=None, use_ocr=None):
             page_results.append({'page':page_no,'method':method,'lines':lines,'image':f'{page_no}.png' if output else None})
             layout_hints.extend(observations(lines, page_no))
             page_classifications.extend(dict(item, page=page_no) for item in classify([line['text'] for line in lines]))
+            semantic_candidates, annotations = understand(lines,page_no)
+            document_annotations.extend(annotations)
+            if method=='NATIVE_PDF' and any(rect.get_area() > page.rect.get_area()*.65 for item in page.get_images()[:100] for rect in page.get_image_rects(item[0])):
+                document_annotations.append(dict(page=page_no,kind='SCANNED_TEXT_LAYER',status='VISUAL_REVIEW_REQUIRED',reason='This page has a text layer over a large scanned image. Check the original carefully; embedded OCR text may contain transcription errors.'))
+            for item in semantic_candidates:
+                if item['score'] is not None and item['score'] < .65:continue
+                try:value=normalize(item['key'],item['normalized'])
+                except (ValueError,InvalidOperation):continue
+                quality='LOW_RECOGNITION' if item['score'] is not None and item['score'] < .90 else 'UNCONFIRMED_CANDIDATE'
+                fields.append(dict(key=item['key'],raw=item['raw'],value=value,page=page_no,bbox=item['bbox'],
+                                   engine=f'{method}:{quality}:{item["basis"]}:document-patterns-v1',recognition_score=item['score']))
             for line in [*lines, *associated_lines(lines)]:
                 all_lines.append(line['text'])
                 if line['score'] is not None and line['score'] < .65:
@@ -128,14 +143,21 @@ def extract(path, output_dir=None, use_ocr=None):
                 fields.append({'key':key,'raw':raw,'value':value,'page':page_no,'bbox':line['bbox'],
                                'engine':f'{method}:{quality}:{line.get("association","EXPLICIT_LABEL")}:pymupdf-{fitz.VersionBind}:candidates-v3',
                                'recognition_score':line['score']})
-        # Duplicate critical keys remain ambiguous instead of taking the last value.
+        # Identical repeated headings agree; conflicting values remain ambiguous.
+        unique={}
+        for field in fields:
+            unique.setdefault((field['key'],json.dumps(field['value'],sort_keys=True)),field)
+        repeated_agreements=len(fields)-len(unique)
+        fields=list(unique.values())
         counts = {f['key']: sum(x['key'] == f['key'] for x in fields) for f in fields}
         fields = [f for f in fields if counts[f['key']] == 1]
         return {'pages': len(doc), 'fields': fields, 'page_artifacts': page_results,
                 'classification_candidates':classify(all_lines),
                 'page_classifications':page_classifications, 'layout_observations':layout_hints,
+                'document_annotations':document_annotations,
                 'metrics':{'elapsed_seconds':round(time.monotonic()-started,3),'ocr_pages':sum(p['method'].startswith('CPU_OCR_') for p in page_results),
                            'ocr_provider':os.getenv('AICTE_OCR_PROVIDER','rapidocr'), 'forced_ocr':force_ocr,
+                           'repeated_agreeing_candidates':repeated_agreements,
                            'low_recognition_lines_omitted':low_confidence,'candidate_fields':len(fields),
                            'low_recognition_candidates':sum('LOW_RECOGNITION' in f['engine'] for f in fields),
                            'automatic_accepted_critical_fields':0,'duplicate_keys_omitted':[k for k,n in counts.items() if n>1]},

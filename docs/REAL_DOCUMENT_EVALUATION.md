@@ -2,9 +2,17 @@
 
 Four institution-published PDFs were downloaded on 28 October 2026 into the ignored `.data/public-documents/` directory. The source URLs, retrieval timestamps, byte counts and SHA-256 hashes are in `reports/public-document-sources.json`. The originals are not committed or sent to a cloud provider. Publication is not issuer authentication; reuse/training permission has not been established.
 
-## Observed result
+## Initial baseline result
 
-The first collection has 39 pages: TSM occupancy (4), TSM fire licence (1), MES mandatory disclosure (28), BIT Sindri 2026–27 EoA (6). All pages contain some native text, which does not establish that their text layers are accurate or complete. The current conservative extractor returned **zero structured field candidates on all four documents**, and correctly routed them to manual extraction. See `reports/public-layout-coverage.json` for the actual run. This is a coverage failure, not evidence of real-world accuracy. The synthetic development result must not be presented as a real-document benchmark.
+The first collection had 39 pages: TSM occupancy (4), TSM fire licence (1), MES mandatory disclosure (28), BIT Sindri 2026–27 EoA (6). All pages contain some native text, which does not establish that their text layers are accurate or complete. The original 0.2 extractor returned **zero structured field candidates on all four documents** and routed them to manual extraction. This was a coverage failure; subsequent changes must be measured separately. The synthetic development result must not be presented as a real-document benchmark.
+
+## Current provisional evaluation
+
+Version 0.3 adds source-grounded building/floor narrative patterns, approval metadata and ambiguous-table abstention. A fifth PDF, a four-page EoA from a different institution, was collected separately. Parser hashes were frozen before visual inspection of that institution's labels. `fixtures/real-document-labels.json` and `reports/real-document-check.json` record 12 selected expected values: 11 exact matches, one wrong embedded-text institution name, no missed selected values and 10 matches to the labelled source regions. Unscored metadata is listed separately. The handwritten validity date and unlinked building scope remain abstained. Labels are provisional assistant visual labels, not independently validated human ground truth; the data is too small to support representative accuracy claims.
+
+The real public fire-page OCR comparison recovered the expected institution spelling. Its existing fields stayed unchanged and unconfirmed. A reviewer must compare the original and explicitly record a correction. OCR still makes errors, especially on handwriting; a high recognition score cannot certify a date or authenticity.
+
+The live download of an institution-linked fire PDF returned HTML and was rejected by intake; the source manifest records failure. A cached web representation described a payment receipt. This observation motivated a synthetic negative control, not a verified allegation about the institution or a locally measured PDF case. Receipt-page detection now blocks such pages from supporting building/fire scope even when their facts are manually confirmed.
 
 Visual inspection of the TSM first pages confirms material layout differences: a narrative certificate with a small approval table, and a fire licence with inline floor notation and handwritten dates. The website's document label alone does not establish the legal type of each page or the covered building. A bundle must be classified and linked page by page. Existing colon-labelled extraction is insufficient for these layouts.
 

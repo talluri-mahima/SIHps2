@@ -1,0 +1,11 @@
+{
+  "at": "2026-10-28T01:49:32.747589+00:00",
+  "purpose": "Freeze before inspecting held-out institution labels; preliminary evaluation, not independent human validation",
+  "files": {
+    "app/candidates.py": "82751cdf995ec3503649dee14c49de890756a8ffa3e848bd5cfce7ffcf880071",
+    "app/document_understanding.py": "9ad6a1e712c1e67db45e6805772fd9b5fc140a2434bc96fc0490214abfe7a405",
+    "app/layout.py": "54beb461e481f0a02b561ddd91a2602e0b9f4d8d6b61cc4c29f232d523964d18",
+    "app/extract.py": "ad6f24ce1a0f12c6cdc1eef472762945cf409d5feae4033398696bcea66e8a17"
+  },
+  "institution_holdout": "bcrec-eoa-holdout"
+}

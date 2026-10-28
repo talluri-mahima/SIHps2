@@ -40,6 +40,10 @@ def evaluate(category, evaluation_date, documents):
         f = d and d['fields'].get(key)
         if not f or not f['confirmed_by']:
             return None
+        if kind in {'OCCUPANCY','FIRE_CERTIFICATE','BUILDING_PLAN'} and any(
+            p.get('page')==f['page'] and p.get('status')=='NOT_CERTIFICATE_EVIDENCE'
+            for p in d.get('document_annotations',[])):
+            return None
         return f
 
     def refs(*fields):
@@ -50,6 +54,15 @@ def evaluate(category, evaluation_date, documents):
             emit('DOC-COMPLETE-001', f'Missing {kind.replace("_", " ").lower()}',
                  'Expected evidence for this demonstration workflow has not been submitted. This checklist is not an approved APH pack.',
                  reason='MISSING_DOCUMENT')
+            findings[-1]['expected_document_kind']=kind
+
+    for d in documents:
+        if d['kind'] in {'OCCUPANCY','FIRE_CERTIFICATE','BUILDING_PLAN'} and any(
+            p.get('status')=='NOT_CERTIFICATE_EVIDENCE' for p in d.get('document_annotations',[])):
+            emit('DOC-TYPE-001','Submitted certificate includes payment-receipt evidence',
+                 'Identified payment-receipt pages cannot establish building or fire-certificate coverage. Inspect the complete bundle and obtain the actual applicable certificate.',
+                 reason='PAYMENT_RECEIPT_NOT_AUTHORIZATION')
+            findings[-1]['expected_document_kind']=d['kind']
 
     rooms = accepted('ROOM_SCHEDULE', 'CLAIMED_FLOORS')
     occ = accepted('OCCUPANCY', 'COVERED_FLOORS')

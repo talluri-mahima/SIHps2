@@ -28,10 +28,12 @@ import {
   X,
 } from "lucide-react";
 import "./styles.css";
+import "./workspace-theme.css";
 import {
   IntegrationsPanel,
   ProcessingTools,
   Verification,
+  RectificationPanel,
 } from "./SubmissionPanels";
 
 type Fact = {
@@ -59,6 +61,8 @@ type Doc = {
   source_status: string;
   source_mode: string;
   processing?: {
+    document_annotations?: {page:number;kind:string;status:string;reason:string}[];
+    page_classifications?: {page:number;kind:string;basis:string}[];
     layout_observations?: {kind:string;page:number;raw:string;meaning:string;suggested_value?:string[]}[];
     metrics: {
       elapsed_seconds: number;
@@ -103,6 +107,7 @@ type Evaluation = {
   created_at: string;
 };
 type Detail = {
+  rulepack:{version:string};
   id: string;
   name: string;
   category: string;
@@ -146,7 +151,7 @@ const nav = [
   { name: "Integrations", icon: Link2 },
 ] as const;
 const pretty = (value: string) =>
-  value
+  ({DPR:'Detailed project report',FDR_ADVICE:'FDR advice',FDR_NUMBER:'FDR number',PRIOR_EOA:'Prior EoA letter',PRINCIPAL_INR:'Principal (INR)',LIEN_INR:'Amount under lien (INR)',UNRESTRICTED_CLAIM_INR:'Unrestricted funding claim (INR)'} as Record<string,string>)[value] || value
     .toLowerCase()
     .replaceAll("_", " ")
     .replace(/\b\w/g, (s) => s.toUpperCase());
@@ -199,6 +204,7 @@ function App() {
     [page, setPage] = useState<WorkspacePage>("Overview"),
     [docId, setDocId] = useState(""),
     [fieldId, setFieldId] = useState("");
+  const [previewPage,setPreviewPage]=useState(1);
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [toast, setToast] = useState(""),
@@ -217,6 +223,7 @@ function App() {
     isApplicant = user?.role === "SUBMITTER";
   const doc = data?.documents.find((d) => d.id === docId) || data?.documents[0];
   const field = doc?.fields.find((f) => f.id === fieldId) || doc?.fields[0];
+  useEffect(()=>{setPreviewPage(field?.page || 1)},[doc?.id,field?.id]);
   const findings = data?.evaluation?.findings || [];
   const unconfirmed =
     data?.documents.reduce(
@@ -224,6 +231,7 @@ function App() {
       0,
     ) || 0;
   const received = data?.checklist.filter((c) => c.received).length || 0;
+  const factCount=data?.documents.reduce((count,document)=>count+document.fields.length,0)||0;
   async function refresh(id = active) {
     if (!id) return;
     const result = await api<Detail>("/applications/" + id);
@@ -329,6 +337,10 @@ function App() {
     };
   }, [modal, finding, editing, busy]);
   const openEvidence = (documentId: string, factId = "") => {
+    if(!data?.documents.some(document=>document.id===documentId)){
+      window.open('/v1/documents/'+encodeURIComponent(documentId)+'/original','_blank','noopener,noreferrer');
+      return;
+    }
     setDocId(documentId);
     setFieldId(factId);
     setPage("Evidence");
@@ -786,6 +798,22 @@ function App() {
             <>
               {page === "Overview" && (
                 <>
+                  <section className="review-hero">
+                    <div className="review-hero-copy">
+                      <span className="tiny-label">YOUR SCRUTINY, IN FOCUS</span>
+                      <h2>Every decision starts<br/>with the right evidence.</h2>
+                      <p>{unconfirmed>0 ? `${unconfirmed} extracted facts need your review before they can support a claim.` : data.evaluation?.stale ? "Evidence has changed. Re-evaluate the current versions before continuing." : data.evaluation ? "Your evidence checks are ready. Inspect the gaps and record your review." : "Build the evidence set, confirm the facts, and run traceable checks."}</p>
+                      <button className="primary" onClick={()=>setPage(unconfirmed || !data.evaluation ? "Evidence" : "Findings")}>Continue review <ArrowRight size={16}/></button>
+                    </div>
+                    <div className="review-route" aria-label="Review workflow">
+                      {[
+                        {name:"Collect evidence",detail:`${received} of ${data.checklist.length} document types`,done:received===data.checklist.length},
+                        {name:"Confirm the facts",detail:factCount ? (unconfirmed ? `${unconfirmed} awaiting review` : "Fact review recorded") : "No extracted facts reviewed",done:factCount>0 && unconfirmed===0},
+                        {name:"Run evidence checks",detail:data.evaluation?.stale ? "Re-evaluation needed" : unconfirmed && data.evaluation ? "Confirm facts and re-evaluate" : data.evaluation ? "Traceable checks complete" : "Not evaluated yet",done:!!data.evaluation && !data.evaluation.stale && unconfirmed===0 && factCount>0},
+                        {name:"Review & rectify",detail:"Officer decision with evidence",done:false}
+                      ].map((step,index)=><div className={"route-step "+(step.done?"done":"")} key={step.name}><span className="route-number">{step.done?<Check size={14}/>:String(index+1).padStart(2,"0")}</span><div><strong>{step.name}</strong><small>{step.detail}</small></div>{step.done&&<Check size={15}/>}</div>)}
+                    </div>
+                  </section>
                   <div className="stats">
                     <Stat
                       label="CHECKLIST EVIDENCE"
@@ -876,7 +904,7 @@ function App() {
                       </div>
                       <div className="panel-footer">
                         <span>Checklist basis: demonstration workflow</span>
-                        <Badge>Draft pack v0.1.0</Badge>
+                        <Badge>Draft pack v{data.rulepack.version}</Badge>
                       </div>
                     </section>
                     <section className="panel focus-panel">
@@ -1044,7 +1072,11 @@ function App() {
                             <div className="page-toolbar">
                               <FileText size={14} />
                               Original evidence{" "}
-                              <span>Page {field?.page || 1}</span>
+                              <div className="page-controls">
+                                <button className="icon-button" aria-label="Previous document page" disabled={previewPage<=1} onClick={()=>setPreviewPage(p=>p-1)}><ChevronRight size={15} style={{transform:'rotate(180deg)'}}/></button>
+                                <label>Page <select aria-label="Document page" value={previewPage} onChange={e=>setPreviewPage(Number(e.target.value))}>{Array.from({length:doc.pages || 1},(_,index)=><option key={index+1} value={index+1}>{index+1}</option>)}</select> / {doc.pages || 1}</label>
+                                <button className="icon-button" aria-label="Next document page" disabled={previewPage>=doc.pages} onClick={()=>setPreviewPage(p=>p+1)}><ChevronRight size={15}/></button>
+                              </div>
                             </div>
                             {[
                               "EXTRACTED",
@@ -1057,11 +1089,11 @@ function App() {
                                     "/v1/documents/" +
                                     doc.id +
                                     "/pages/" +
-                                    (field?.page || 1)
+                                    previewPage
                                   }
-                                  alt={`${pretty(doc.kind)} original page ${field?.page || 1}`}
+                                  alt={`${pretty(doc.kind)} original page ${previewPage}`}
                                 />
-                                {field && (
+                                {field && field.page===previewPage && (
                                   <div
                                     className="evidence-box"
                                     style={{
@@ -1191,6 +1223,7 @@ function App() {
                               )}
                             </div>
                             <ProcessingTools
+                                currentPage={previewPage}
                               docId={doc.id}
                               processing={doc.processing}
                               events={doc.verification_events}
@@ -1476,6 +1509,7 @@ function App() {
                       </button>
                     )}
                   </div>
+                  <RectificationPanel applicationId={active} revision={data.revision} evaluationId={data.evaluation?.id} stale={data.evaluation?.stale ?? true} documents={data.documents} role={user.role} busy={busy} run={perform} refresh={refresh} onEvidence={openEvidence}/>
                   {findings.length ? (
                     findings
                       .filter((f) =>
@@ -1865,12 +1899,10 @@ function App() {
                       ) : (
                         <>
                           <option value="CONFIRM">Confirm observation</option>
+                          <option value="REQUEST_CLARIFICATION">Request specific clarification</option>
                           <option value="DISMISS">Dismiss with reason</option>
                           <option value="VERIFY">
                             Move response to verification pending
-                          </option>
-                          <option value="RESOLVE">
-                            Resolve confirmed observation
                           </option>
                         </>
                       )}

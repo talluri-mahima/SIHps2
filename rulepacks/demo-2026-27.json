@@ -1,6 +1,6 @@
 {
   "id": "evidence-consistency-demo",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "status": "DRAFT",
   "policy_review": "PENDING",
   "description": "Data-consistency checks only. No approved regulatory thresholds or AICTE approval decisions.",
@@ -11,6 +11,7 @@
     "applicability": "These sources explain the regulatory context. The executable checks remain draft documentary-consistency checks; applicable amendments and policy approval are pending. Private-lease floor-scope provisions are not universal requirements."
   },
   "rules": [
+    {"id":"DOC-TYPE-001","title":"Payment is not certificate coverage","basis":"Page-level document purpose check; no authenticity or regulatory approval inferred"},
     {"id": "DOC-COMPLETE-001", "title": "Expected demonstration evidence", "basis": "Demo workflow checklist; not a certified APH requirement"},
     {"id": "INFRA-SCOPE-001", "title": "Claimed floors versus occupancy coverage", "basis": "Submitted documentary scope comparison; policy review pending"},
     {"id": "FIN-LIEN-001", "title": "Unrestricted funding claim versus lien evidence", "basis": "Exact-instrument cross-document consistency; not a prescribed funds threshold"},

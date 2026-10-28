@@ -1,0 +1,12 @@
+{
+  "dataset":"public-layout-preliminary-v1",
+  "label_status":"ASSISTANT_VISUAL_LABELS_PENDING_INDEPENDENT_HUMAN_REVIEW",
+  "independent_labels":false,
+  "notice":"Selected-field development evaluation only. Not model training, representative accuracy, authenticity verification, or a sealed independent benchmark. Other metadata keys are unscored.",
+  "cases":[
+    {"id":"tsm-occupancy","split":"development","expected":{"BUILDING":{"value":"MAIN BUILDING","page":2,"region":[0.04,0.06,0.85,0.14]},"COVERED_FLOORS":{"value":["G","1"],"page":2,"region":[0.04,0.06,0.85,0.14]}},"must_abstain":["APPROVAL_REFERENCE"],"label_note":"The bundle has different approval/stability references; do not choose one global reference."},
+    {"id":"tsm-fire","split":"development","expected":{"ISSUING_AUTHORITY":{"value":"TAMILNADU FIRE & RESCUE SERVICE","page":1,"region":[0.1,0.07,0.9,0.15]},"INSTITUTION_NAME":{"value":"THIAGARAJAR SCHOOL OF MANAGEMENT","page":1,"region":[0.05,0.27,0.9,0.34]}},"must_abstain":["VALID_UNTIL","BUILDING","COVERED_FLOORS"],"label_note":"A handwritten numeric validity date and an institution-level G+1 mention do not establish a parsed date or a linked building scope. Native text misspells the institution name; report the error rather than tune a name replacement."},
+    {"id":"bit-sindri-eoa-2026","split":"development","expected":{"ACADEMIC_YEAR":{"value":"2026-27","page":1,"region":[0.04,0.07,0.96,0.24]},"ISSUED_ON":{"value":"2026-04-20","page":1,"region":[0.04,0.07,0.96,0.24]},"APPROVAL_REFERENCE":{"value":"EASTERN/1-46221981547/2026/EOA","page":1,"region":[0.04,0.07,0.96,0.24]},"ISSUING_AUTHORITY":{"value":"ALL INDIA COUNCIL FOR TECHNICAL EDUCATION","page":1,"region":[0.04,0.07,0.96,0.24]}},"must_abstain":["BUILDING","COVERED_FLOORS"]},
+    {"id":"bcrec-eoa-holdout","split":"institution_holdout_preliminary","expected":{"ACADEMIC_YEAR":{"value":"2026-27","page":1,"region":[0.04,0.07,0.96,0.24]},"ISSUED_ON":{"value":"2026-04-22","page":1,"region":[0.04,0.07,0.96,0.24]},"APPROVAL_REFERENCE":{"value":"EASTERN/1-46271582145/2026/EOA","page":1,"region":[0.04,0.07,0.96,0.24]},"ISSUING_AUTHORITY":{"value":"ALL INDIA COUNCIL FOR TECHNICAL EDUCATION","page":1,"region":[0.04,0.07,0.96,0.24]}},"must_abstain":["BUILDING","COVERED_FLOORS"],"label_note":"Different institution. Parser file hashes were frozen before visual label inspection; no tuning against these expected values is permitted in this evaluation version."}
+  ]
+}

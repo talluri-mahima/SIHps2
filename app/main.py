@@ -20,7 +20,8 @@ from . import models as m
 from .config import DATA, ROOT, MAX_BYTES, SOFTWARE_VERSION
 from .db import Session, initialize
 from .rules import CHECKLISTS, KINDS, RULEPACK, RULEPACK_HASH, canonical, digest
-from .service import WRITE_LOCK, audit, scoped, document_scope, latest_fields, latest_documents, invalidate, run_job, run_evaluation
+from .service import WRITE_LOCK, PARSER_SLOTS, audit, scoped, document_scope, latest_fields, latest_documents, invalidate, run_job, run_evaluation, document_annotations
+from .resolution import check_resolution
 from .extract import normalize, ALLOWED
 
 hasher = PasswordHasher()
@@ -122,7 +123,7 @@ class Correction(StrictModel):
 
 
 class Action(StrictModel):
-    action: Literal['CONFIRM', 'DISMISS', 'RESOLVE', 'RESPOND', 'VERIFY']
+    action: Literal['CONFIRM', 'DISMISS', 'RESOLVE', 'RESPOND', 'VERIFY','REQUEST_CLARIFICATION']
     reason: str = PField(min_length=5, max_length=1000)
 
 
@@ -144,6 +145,9 @@ class Resolution(StrictModel):
     evaluation_id: str
     supporting_document_ids: list[str]
     reason: str = PField(min_length=10,max_length=1000)
+
+class CompareOCR(StrictModel):
+    page:int=PField(ge=1,le=30)
 
 
 @app.get('/v1/health')
@@ -266,7 +270,7 @@ def application_detail(app_id: str, user=Depends(current_user), db=Depends(db_se
     evaluation = None
     if ev:
         evaluation = {'id': ev.id, 'revision': ev.revision, 'manifest_hash': ev.manifest_hash, 'created_at': ev.created_at,
-                      'stale': ev.revision != a.revision, **json.loads(ev.result_json)}
+                      'stale': ev.revision != a.revision or json.loads(ev.result_json).get('rulepack_hash')!=RULEPACK_HASH, **json.loads(ev.result_json)}
         evaluation['findings'] = [{'id': f.id, 'state': f.state, 'version': f.version, **json.loads(f.body_json)} for f in db.scalars(select(m.Finding).where(m.Finding.evaluation_id == ev.id))]
     return {'id': a.id, 'name': a.name, 'category': a.category, 'academic_year': a.academic_year, 'evaluation_date': a.evaluation_date,
             'revision': a.revision, 'synthetic': bool(a.synthetic), 'rulepack': RULEPACK,
@@ -366,6 +370,30 @@ def add_manual_field(doc_id: str,body:ManualField,user=Depends(current_user)):
         invalidate(db,a,user.id,{'manual_field_id':f.id})
         audit(db,a,user.id,'MANUAL_EVIDENCE_FACT_ADDED',{'field_id':f.id,'page':body.page,'reason':body.reason})
         return {'id':f.id}
+
+
+@app.post('/v1/documents/{doc_id}/ocr-comparisons',status_code=201)
+def compare_ocr(doc_id:str,body:CompareOCR,user=Depends(current_user)):
+    officer(user)
+    with Session() as db:
+        _,d=document_scope(db,user,doc_id,True)
+        page=db.scalar(select(m.PageArtifact).where(m.PageArtifact.document_id==doc_id,m.PageArtifact.page==body.page))
+        if not page or d.status not in {'EXTRACTED','MANUAL_EXTRACTION_REQUIRED','OCR_REQUIRED'}:raise HTTPException(409,'Processed source page is required')
+        image=DATA/'derived'/page.image_key
+        sha=d.sha256
+    try:
+        with PARSER_SLOTS:
+            result=subprocess.run([sys.executable,'-m','app.ocr_compare',str(image)],cwd=ROOT,capture_output=True,text=True,timeout=210,check=True)
+        payload=json.loads(result.stdout)
+    except Exception:
+        raise HTTPException(503,'Local OCR comparison did not complete. Existing facts remain unchanged; inspect the original or retry.')
+    with WRITE_LOCK,Session.begin() as db:
+        a,d=document_scope(db,user,doc_id,True)
+        payload.update(page=body.page,document_sha256=sha)
+        db.add(m.VerificationEvent(document_id=doc_id,check_type='OCR_COMPARISON',mode=payload['method'],status='REVIEW_REQUIRED',payload_json=canonical(payload),actor=user.id))
+        invalidate(db,a,user.id,{'ocr_comparison_document':doc_id,'page':body.page})
+        audit(db,a,user.id,'OCR_COMPARISON_RECORDED',{'document_id':doc_id,'page':body.page,'method':payload['method'],'automatic_accepted_fields':0})
+    return payload
 
 
 @app.post('/v1/documents/{doc_id}/signature-checks',status_code=201)
@@ -503,7 +531,7 @@ def manifest(evaluation_id: str, user=Depends(current_user), db=Depends(db_sessi
 @app.get('/v1/applications/{app_id}/evaluations')
 def evaluation_history(app_id:str,user=Depends(current_user),db=Depends(db_session)):
     a=scoped(db,user,app_id)
-    return [{'id':ev.id,'revision':ev.revision,'stale':ev.revision!=a.revision,'manifest_hash':ev.manifest_hash,'at':ev.created_at,
+    return [{'id':ev.id,'revision':ev.revision,'stale':ev.revision!=a.revision or json.loads(ev.result_json).get('rulepack_hash')!=RULEPACK_HASH,'manifest_hash':ev.manifest_hash,'at':ev.created_at,
              'findings':[{'id':f.id,'state':f.state,'version':f.version,**json.loads(f.body_json)} for f in db.scalars(select(m.Finding).where(m.Finding.evaluation_id==ev.id))]}
             for ev in db.scalars(select(m.Evaluation).where(m.Evaluation.application_id==app_id).order_by(m.Evaluation.created_at.desc()))]
 
@@ -519,14 +547,17 @@ def resolve_after_review(finding_id:str,body:Resolution,if_match:str=Header(...,
         if f.state not in {'REVIEWER_CONFIRMED','VERIFICATION_PENDING','RESPONSE_RECEIVED'}:
             raise HTTPException(409,'Only an existing reviewed or pending observation can be resolved')
         current=db.scalar(select(m.Evaluation).where(m.Evaluation.application_id==a.id).order_by(m.Evaluation.created_at.desc()).limit(1))
-        if not current or current.id!=body.evaluation_id or current.revision!=a.revision or current.id==f.evaluation_id:
+        if not current or current.id!=body.evaluation_id or current.revision!=a.revision or current.id==f.evaluation_id or json.loads(current.result_json).get('rulepack_hash')!=RULEPACK_HASH:
             raise HTTPException(409,'A newer current evaluation is required')
         old=json.loads(f.body_json)
-        if any(item['rule_id']==old['rule_id'] and item['module']==old['module'] for item in json.loads(current.result_json)['findings']):
-            raise HTTPException(409,'The current evaluation still has an unresolved check for this rule and module')
         ids=set(body.supporting_document_ids)
         if not ids:raise HTTPException(422,'Select supporting replacement evidence')
         current_documents={d.id:d for d in latest_documents(db,a.id)}
+        old_documents=[db.get(m.Document,r['document_id']) for r in old.get('evidence',[])]
+        old_kinds={d.kind for d in old_documents if d}
+        snapshots=[{'id':d.id,'kind':d.kind,'fields':latest_fields(db,d.id),'document_annotations':document_annotations(db,d.id)} for d in current_documents.values()]
+        problem=check_resolution(old,json.loads(current.result_json),snapshots,ids,old_kinds,a.evaluation_date)
+        if problem:raise HTTPException(409,problem)
         for doc_id in ids:
             d=current_documents.get(doc_id)
             if not d:raise HTTPException(404,'Current supporting document not found')
@@ -557,9 +588,12 @@ def finding_action(finding_id: str, body: Action, if_match: str = Header(..., al
             target = 'RESPONSE_RECEIVED'
         else:
             officer(user)
-            if ev.revision != a.revision:
+            if body.action=='RESOLVE':
+                raise HTTPException(409,'Use rectification history to link a newer evaluation and supporting evidence')
+            if ev.revision != a.revision or json.loads(ev.result_json).get('rulepack_hash')!=RULEPACK_HASH:
                 raise HTTPException(409, 'Evidence changed; run a new evaluation')
             transitions = {'CONFIRM': ({'OPEN', 'RESPONSE_RECEIVED', 'VERIFICATION_PENDING'}, 'REVIEWER_CONFIRMED'),
+                           'REQUEST_CLARIFICATION': ({'OPEN','REVIEWER_CONFIRMED','RESPONSE_RECEIVED','VERIFICATION_PENDING'},'VERIFICATION_PENDING'),
                            'DISMISS': ({'OPEN', 'RESPONSE_RECEIVED', 'VERIFICATION_PENDING'}, 'DISMISSED'),
                            'VERIFY': ({'RESPONSE_RECEIVED'}, 'VERIFICATION_PENDING'),
                            'RESOLVE': ({'REVIEWER_CONFIRMED'}, 'RESOLVED')}
@@ -567,7 +601,7 @@ def finding_action(finding_id: str, body: Action, if_match: str = Header(..., al
             if f.state not in allowed:
                 raise HTTPException(409, 'Invalid finding transition')
         f.state, f.version, f.updated_at = target, f.version+1, m.now()
-        audit(db, a, user.id, 'FINDING_' + target, {'finding_id': f.id, 'reason': body.reason})
+        audit(db, a, user.id, 'FINDING_' + target, {'finding_id': f.id, 'reason': body.reason,'requested_action':body.action})
         return {'state': f.state, 'version': f.version}
 
 
@@ -577,12 +611,14 @@ def export(app_id: str, user=Depends(current_user)):
     with WRITE_LOCK, Session.begin() as db:
         a = scoped(db, user, app_id, True)
         ev = db.scalar(select(m.Evaluation).where(m.Evaluation.application_id == app_id).order_by(m.Evaluation.created_at.desc()).limit(1))
-        if not ev or ev.revision != a.revision:
+        if not ev or ev.revision != a.revision or json.loads(ev.result_json).get('rulepack_hash')!=RULEPACK_HASH:
             raise HTTPException(409, 'Run an evaluation against current evidence first')
         findings = db.scalars(select(m.Finding).where(m.Finding.evaluation_id == ev.id, m.Finding.state == 'REVIEWER_CONFIRMED')).all()
+        resolutions=[{'at':event.created_at,'reviewer':event.actor,**json.loads(event.detail_json)} for event in db.scalars(select(m.Audit).where(m.Audit.application_id==a.id,m.Audit.action=='HISTORICAL_FINDING_RESOLVED').order_by(m.Audit.id))]
         body = {'application_id': a.id, 'name': a.name, 'synthetic': True, 'report_type': 'DEMONSTRATION_REVIEW_NOT_OFFICIAL_DEFICIENCY',
                 'policy_status': 'DRAFT_NOT_APPROVED', 'evaluation_id': ev.id, 'manifest_hash': ev.manifest_hash,
-                'exported_by': user.id, 'created_at': m.now(), 'confirmed_findings': [{'id': f.id, **json.loads(f.body_json)} for f in findings]}
+                'exported_by': user.id, 'created_at': m.now(), 'confirmed_findings': [{'id': f.id, **json.loads(f.body_json)} for f in findings],
+                'rectification_history':resolutions,'limitations':['Draft policy checks; not an AICTE decision','Source modes remain manual/mock unless an authorized issuer adapter is connected']}
         row = m.Export(application_id=a.id, body_json=canonical(body), sha256=digest(body))
         db.add(row)
         db.flush()

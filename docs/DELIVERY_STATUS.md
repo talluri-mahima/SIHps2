@@ -1,6 +1,14 @@
-# Delivery status · milestone 0.2 local prototype
+# Delivery status · milestone 0.3 local prototype
 
-The original product plan remains the target. This is the first runnable foundation, not a completed product MVP or a declaration that formal gates G0–G6 passed.
+This is a working local submission prototype with the core scrutiny and rectification journey. It is not a production release or a declaration that regulated-release gates G0–G6 passed.
+
+## Submission additions
+
+The interface has a responsive navy/teal redesign, guided overview, freely navigable document pages, source highlighting, page-level warnings and clarification/rectification history. An actual public PDF can be re-read with local PaddleOCR without changing accepted facts. The synthetic end-to-end demonstration records a request, applicant response, replacement, explicit MOCK source observation, newer evaluation and reviewed resolution. Old originals and exports remain immutable. Direct resolution without supporting evidence is rejected. Rule-pack changes invalidate current-use evaluations as well as document revisions.
+
+Five public PDFs (43 pages) are local, ignored evaluation material. A sixth attempted download returned HTML and was not admitted as a PDF. The selected-field provisional check records 11 correct values out of 12, one wrong institution name in embedded OCR text and 10 matches to the labelled citation regions. The institution-separated EoA case has four matching selected fields, but labels are assistant-created and require independent human review. These counts are not generalized accuracy or authenticity probabilities.
+
+The public-page PaddleOCR comparison recovered the expected name and preserved all existing facts unconfirmed. A hidden background launcher, verified backup, demo preparation script, packaging script and five-minute guide support reproducibility. Live government/bank/issuer access and validated real-world accuracy remain unavailable.
 
 ## Local additions since 0.1
 

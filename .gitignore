@@ -9,4 +9,5 @@ dist/
 reports/*.tmp
 reports/*.xml
 reports/browser-failure.png
+reports/submission-package.json
 web/test-results/

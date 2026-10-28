@@ -110,7 +110,7 @@ def _run_job(job_id):
             for p in result.get('page_artifacts',[]):
                 if not db.scalar(select(m.PageArtifact).where(m.PageArtifact.document_id==doc.id,m.PageArtifact.page==p['page'])):
                     db.add(m.PageArtifact(document_id=doc.id,page=p['page'],image_key=f'{doc.id}/{p["page"]}.png',text_json=canonical(p['lines']),method=p['method']))
-            db.add(m.ProcessingResult(document_id=doc.id,payload_json=canonical({'sha256':doc.sha256,'metrics':result.get('metrics',{}),'classification_candidates':result.get('classification_candidates',[]),'page_classifications':result.get('page_classifications',[]),'layout_observations':result.get('layout_observations',[])})))
+            db.add(m.ProcessingResult(document_id=doc.id,payload_json=canonical({'sha256':doc.sha256,'metrics':result.get('metrics',{}),'classification_candidates':result.get('classification_candidates',[]),'page_classifications':result.get('page_classifications',[]),'layout_observations':result.get('layout_observations',[]),'document_annotations':result.get('document_annotations',[])})))
             doc.page_count = result['pages']
             doc.status = result['status']
             job.status = 'COMPLETED'
@@ -127,11 +127,17 @@ def _run_job(job_id):
             audit(db, db.get(m.Application, doc.application_id), 'worker', 'EXTRACTION_FAILED', {'document_id': doc.id, 'error': job.error})
 
 
+def document_annotations(db,document_id):
+    result=db.scalar(select(m.ProcessingResult).where(m.ProcessingResult.document_id==document_id).order_by(m.ProcessingResult.created_at.desc()).limit(1))
+    return json.loads(result.payload_json).get('document_annotations',[]) if result else []
+
+
 def run_evaluation(db, app, actor):
     docs = latest_documents(db, app.id)
     snapshots = [{'id': d.id, 'kind': d.kind, 'sha256': d.sha256, 'version': d.version,
                   'status': d.status, 'source_status': d.source_status, 'source_mode': d.source_mode,
                   'source_note': d.source_note, 'fields': latest_fields(db, d.id),
+                  'document_annotations':document_annotations(db,d.id),
                   'verification_events':[{'id':v.id,'check_type':v.check_type,'mode':v.mode,'status':v.status,'at':v.created_at,'payload':json.loads(v.payload_json)} for v in db.scalars(select(m.VerificationEvent).where(m.VerificationEvent.document_id==d.id).order_by(m.VerificationEvent.created_at,m.VerificationEvent.id))]} for d in docs]
     manifest = {'application_id': app.id, 'context_revision': app.revision, 'category': app.category,
                 'academic_year': app.academic_year, 'evaluation_date': app.evaluation_date,

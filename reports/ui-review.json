@@ -1,0 +1,59 @@
+{
+  "at": "2026-10-28T03:46:45.997064+00:00",
+  "method": "Interactive in-app browser inspection and read-only DOM measurements",
+  "status": "PASS_WITH_DOCUMENTED_LIMITS",
+  "checks": [
+    "Desktop dashboard visual hierarchy",
+    "Desktop evidence viewer and source highlighting",
+    "Completed clarification, response and resolution history displayed",
+    "Mobile overview has no horizontal page overflow at 390x844",
+    "Mobile findings has no horizontal page overflow at 390x844",
+    "Real occupancy page selector opens page 4 of 4",
+    "No wrong-page source highlight on page without a selected fact",
+    "Alternative real-page OCR shown without confirming facts",
+    "Final sign-in styling inspected"
+  ],
+  "screenshots": {
+    "01-before-overview-desktop.png": [
+      1424,
+      1149
+    ],
+    "01-before-overview.png": [
+      586,
+      511
+    ],
+    "02-before-evidence.png": [
+      1425,
+      990
+    ],
+    "03-after-overview.png": [
+      1265,
+      712
+    ],
+    "04-after-evidence.png": [
+      1265,
+      712
+    ],
+    "05-rectification-history.png": [
+      1265,
+      720
+    ],
+    "06-mobile-overview.png": [
+      375,
+      812
+    ],
+    "07-mobile-findings.png": [
+      375,
+      812
+    ],
+    "08-login.png": [
+      1425,
+      866
+    ]
+  },
+  "limits": [
+    "Not a full accessibility certification",
+    "Independent usability study not performed",
+    "External issuer integrations unavailable"
+  ]
+}

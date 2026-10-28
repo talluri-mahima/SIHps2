@@ -1,0 +1,173 @@
+{
+  "at": "2026-10-28T01:50:35.186231+00:00",
+  "dataset": "public-layout-preliminary-v1",
+  "label_status": "ASSISTANT_VISUAL_LABELS_PENDING_INDEPENDENT_HUMAN_REVIEW",
+  "independent_labels": false,
+  "real_world_accuracy_established": false,
+  "extractor_matches_pre_holdout_freeze": true,
+  "notice": "Selected-field development evaluation only. Not model training, representative accuracy, authenticity verification, or a sealed independent benchmark. Other metadata keys are unscored.",
+  "summary": {
+    "expected_fields": 12,
+    "correct": 11,
+    "wrong": 1,
+    "missed": 0,
+    "citation_regions_matched": 10
+  },
+  "cases": [
+    {
+      "id": "tsm-occupancy",
+      "split": "development",
+      "sha256": "ce8b6086f63c817c2b7252f030aca0c70c8c4351ef5e69cbecaa14dafe0fd955",
+      "elapsed_seconds": 0.714,
+      "expected_fields": 2,
+      "correct": 2,
+      "wrong": 0,
+      "missed": 0,
+      "citation_regions_matched": 2,
+      "unsafe_candidates": [],
+      "unscored_candidate_keys": [],
+      "measurements": [
+        {
+          "key": "BUILDING",
+          "status": "CORRECT",
+          "citation_region_matches": true,
+          "actual": "MAIN BUILDING",
+          "expected": "MAIN BUILDING"
+        },
+        {
+          "key": "COVERED_FLOORS",
+          "status": "CORRECT",
+          "citation_region_matches": true,
+          "actual": [
+            "G",
+            "1"
+          ],
+          "expected": [
+            "G",
+            "1"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tsm-fire",
+      "split": "development",
+      "sha256": "9a4501ecca10c68957d445853fa27ef8e052ecf0281a89d94e6fa7766eb7cbc0",
+      "elapsed_seconds": 0.195,
+      "expected_fields": 2,
+      "correct": 1,
+      "wrong": 1,
+      "missed": 0,
+      "citation_regions_matched": 2,
+      "unsafe_candidates": [],
+      "unscored_candidate_keys": [],
+      "measurements": [
+        {
+          "key": "ISSUING_AUTHORITY",
+          "status": "CORRECT",
+          "citation_region_matches": true,
+          "actual": "TAMILNADU FIRE & RESCUE SERVICE",
+          "expected": "TAMILNADU FIRE & RESCUE SERVICE"
+        },
+        {
+          "key": "INSTITUTION_NAME",
+          "status": "WRONG",
+          "citation_region_matches": true,
+          "actual": "THIAGARAIAR SCHOOL OF MANAGEMENT",
+          "expected": "THIAGARAJAR SCHOOL OF MANAGEMENT"
+        }
+      ]
+    },
+    {
+      "id": "bit-sindri-eoa-2026",
+      "split": "development",
+      "sha256": "a37a6618fe15b16c5fd165e564a86bcf0f27a7397d8eb903949033a60519f7a9",
+      "elapsed_seconds": 0.091,
+      "expected_fields": 4,
+      "correct": 4,
+      "wrong": 0,
+      "missed": 0,
+      "citation_regions_matched": 3,
+      "unsafe_candidates": [],
+      "unscored_candidate_keys": [
+        "PERMANENT_ID",
+        "INSTITUTION_NAME"
+      ],
+      "measurements": [
+        {
+          "key": "ACADEMIC_YEAR",
+          "status": "CORRECT",
+          "citation_region_matches": true,
+          "actual": "2026-27",
+          "expected": "2026-27"
+        },
+        {
+          "key": "ISSUED_ON",
+          "status": "CORRECT",
+          "citation_region_matches": true,
+          "actual": "2026-04-20",
+          "expected": "2026-04-20"
+        },
+        {
+          "key": "APPROVAL_REFERENCE",
+          "status": "CORRECT",
+          "citation_region_matches": true,
+          "actual": "EASTERN/1-46221981547/2026/EOA",
+          "expected": "EASTERN/1-46221981547/2026/EOA"
+        },
+        {
+          "key": "ISSUING_AUTHORITY",
+          "status": "CORRECT",
+          "citation_region_matches": false,
+          "actual": "ALL INDIA COUNCIL FOR TECHNICAL EDUCATION",
+          "expected": "ALL INDIA COUNCIL FOR TECHNICAL EDUCATION"
+        }
+      ]
+    },
+    {
+      "id": "bcrec-eoa-holdout",
+      "split": "institution_holdout_preliminary",
+      "sha256": "755028f0d1e097f86dfed1087fe8f026b76195320b52e4f929e187928021ed43",
+      "elapsed_seconds": 0.051,
+      "expected_fields": 4,
+      "correct": 4,
+      "wrong": 0,
+      "missed": 0,
+      "citation_regions_matched": 3,
+      "unsafe_candidates": [],
+      "unscored_candidate_keys": [
+        "PERMANENT_ID"
+      ],
+      "measurements": [
+        {
+          "key": "ACADEMIC_YEAR",
+          "status": "CORRECT",
+          "citation_region_matches": true,
+          "actual": "2026-27",
+          "expected": "2026-27"
+        },
+        {
+          "key": "ISSUED_ON",
+          "status": "CORRECT",
+          "citation_region_matches": true,
+          "actual": "2026-04-22",
+          "expected": "2026-04-22"
+        },
+        {
+          "key": "APPROVAL_REFERENCE",
+          "status": "CORRECT",
+          "citation_region_matches": true,
+          "actual": "EASTERN/1-46271582145/2026/EOA",
+          "expected": "EASTERN/1-46271582145/2026/EOA"
+        },
+        {
+          "key": "ISSUING_AUTHORITY",
+          "status": "CORRECT",
+          "citation_region_matches": false,
+          "actual": "ALL INDIA COUNCIL FOR TECHNICAL EDUCATION",
+          "expected": "ALL INDIA COUNCIL FOR TECHNICAL EDUCATION"
+        }
+      ]
+    }
+  ]
+}

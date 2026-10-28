@@ -1,14 +1,18 @@
-# SIH 26261 Â· Evidence Workbench
+# SIH 26261 · Evidence Workbench
 
 A working development foundation for AICTE application scrutiny. ScopeGuard maps claimed floors to documentary scope; Hestia reconciles exact financial instruments across submitted evidence. Every observation remains human-reviewed and links to its evidence.
 
-**Status: local prototype milestone 0.2, not a production release.** The seeded demonstration is synthetic. A separately stored public-document development corpus tests real layouts; it is not an independent accuracy benchmark. Rules remain draft data-consistency checks, not an approved APH interpretation. No live AICTE/bank/issuer connection or automated institutional approval/rejection.
+**Status: local prototype milestone 0.3, not a production release.** The seeded demonstration is synthetic. A separately stored public-document development corpus tests real layouts; it is not an independent accuracy benchmark. Rules remain draft data-consistency checks, not an approved APH interpretation. No live AICTE/bank/issuer connection or automated institutional approval/rejection.
 
 New local capabilities include CPU OCR, derived-page previews, source-linked manual transcription, layout review hints, SQLite migrations, offline PDF signature checks, QR inspection, frozen PDF reports, password sign-in and an honest connection-status screen. [PaddleOCR setup](docs/PADDLE_OCR.md) uses a separate worker environment; [real-document results](docs/REAL_DOCUMENT_EVALUATION.md) record the extraction gaps.
 
-![ScopeGuard documentary coverage in the working synthetic demonstration](reports/screenshots/infrastructure.png)
+![ScopeGuard documentary coverage in the working synthetic demonstration](reports/screenshots/redesign/03-after-overview.png)
 
 ## Run locally
+
+For the five-minute submission route and actual limitations, read [the demo guide](docs/SUBMISSION_DEMO_GUIDE.md). The prototype includes real-page OCR comparison, page browsing, source-grounded document candidates, explicit clarification requests, replacement verification, rectification history and PDF/JSON reporting.
+
+On this configured laptop, run `./scripts/start-prototype.ps1` in PowerShell to start a hidden background server. Open http://127.0.0.1:8765. The launcher must be run again after a laptop restart; it does not create a scheduled task or an externally reachable service.
 
 Requirements: Python 3.13, Node.js 22 or later. The default development store is SQLite and private local files; Docker is optional.
 
@@ -35,7 +39,7 @@ macOS/Linux equivalents: use `python3`, `.venv/bin/python`, and `npm`. `requirem
 1. Sign in as **Scrutiny officer**. Open **Evidence** and inspect each original PDF.
 2. Confirm the displayed facts in each of the five documents. Individual Review/Edit actions append fact revisions and preserve raw text.
 3. Run evidence checks. In **Infrastructure**, ground/first-floor occupancy is supported; second-floor occupancy remains unknown. Fire evidence has its own scope.
-4. Open **Financial evidence**. FDR `007781` joins only by exact ID, holder and bank. A â‚¹2 crore unrestricted DPR claim conflicts with â‚¹1.8 crore lien evidence; unrestricted residual remains unknown.
+4. Open **Financial evidence**. FDR `007781` joins only by exact ID, holder and bank. A ₹2 crore unrestricted DPR claim conflicts with ₹1.8 crore lien evidence; unrestricted residual remains unknown.
 5. In **Findings**, confirm one observation with a reason. Export includes only current reviewer-confirmed observations and is labelled a synthetic draft-policy demonstration report.
 6. Switch to applicant, submit replacement evidence. The old original is retained, current findings become stale/pending and exports are blocked until re-evaluation.
 7. Create an **EoA** application as applicant to see a different checklist. Auditor can inspect but cannot change facts/findings or export a new report.
@@ -74,7 +78,7 @@ node scripts/browser-smoke.cjs
 
 Browser tests require the app running and a fresh synthetic seed state, because the journey confirms facts and creates an application. To use installed Edge, set `AICTE_BROWSER_PATH` to its executable before running the browser check. Tests isolate their own database under ignored `.data/test-runs/`. Do not point tests at a shared database.
 
-The foundation gate reruns the tests and web build and records source fingerprints in `reports/foundation-gate.json`; it exits nonzero on failure. `--gate production` writes a blocked report and exits nonzero until production requirements exist. Passing development tests does **not** pass G0â€“G6 or establish extraction accuracy on real documents. See [delivery status](docs/DELIVERY_STATUS.md) and [security boundaries](SECURITY.md).
+The foundation gate reruns the tests and web build and records source fingerprints in `reports/foundation-gate.json`; it exits nonzero on failure. `--gate production` writes a blocked report and exits nonzero until production requirements exist. Passing development tests does **not** pass G0–G6 or establish extraction accuracy on real documents. See [delivery status](docs/DELIVERY_STATUS.md) and [security boundaries](SECURITY.md).
 
 ## Storage and configuration
 
